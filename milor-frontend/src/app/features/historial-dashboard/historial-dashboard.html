@@ -11,49 +11,74 @@
       <div class="flex items-center gap-2">
         <label class="text-xs font-bold text-slate-500">Desde:</label>
         <input type="date" [ngModel]="fechaInicio()" (ngModelChange)="fechaInicio.set($event)" 
-               class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-emerald-500">
+               class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-brand-500">
       </div>
       <div class="flex items-center gap-2">
         <label class="text-xs font-bold text-slate-500">Hasta:</label>
         <input type="date" [ngModel]="fechaFin()" (ngModelChange)="fechaFin.set($event)" 
-               class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-emerald-500">
+               class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-brand-500">
       </div>
       <button (click)="buscarHistorial()" [disabled]="cargando()"
-              class="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white rounded-lg text-sm font-bold shadow-sm transition-colors">
-        {{ cargando() ? 'Buscando...' : 'Filtrar' }}
+              class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition active:scale-95 flex items-center gap-2">
+        <span>🔄</span> {{ cargando() ? 'Actualizando...' : 'Actualizar' }}
       </button>
     </div>
   </div>
 
-  <!-- Nueva sintaxis @if de Angular -->
   @if (metricas()) {
-    <!-- Tarjetas Principales -->
+    <!-- Tarjetas Principales con el diseño de barras de colores idéntico -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Recaudado</span>
-        <p class="text-3xl font-black text-slate-900 mt-2">S/ {{ metricas()!.totalRecaudado | number:'1.2-2' }}</p>
+      
+      <!-- Tarjeta 1: Total Recaudado -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Recaudado</span>
+          <p class="text-3xl font-black text-slate-900 mt-2">S/ {{ metricas()!.totalRecaudado | number:'1.2-2' }}</p>
+        </div>
+        <span class="text-xs font-bold text-emerald-600 mt-3">Rango seleccionado</span>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Menús Vendidos</span>
-        <p class="text-3xl font-black text-slate-900 mt-2">{{ metricas()!.totalMenusVendidos }}</p>
+      <!-- Tarjeta 2: Menús Vendidos -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Menús Vendidos</span>
+          <p class="text-3xl font-black text-slate-900 mt-2">{{ metricas()!.totalMenusVendidos }}</p>
+        </div>
+        <span class="text-xs font-medium text-slate-400 mt-3">Platos despachados</span>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Modalidad</span>
-        <div class="flex justify-between items-baseline mt-2">
-          <span class="text-sm font-bold text-slate-700">🍽️ Local: {{ metricas()!.totalLocal }}</span>
-          <span class="text-sm font-bold text-slate-700">🥡 Llevar: {{ metricas()!.totalLlevar }}</span>
+      <!-- Tarjeta 3: Modalidad (Con barra de colores divisoria) -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Modalidad</span>
+          <div class="flex justify-between items-baseline mt-2">
+            <span class="text-sm font-bold text-slate-700">🍽️ Local: {{ metricas()!.totalLocal }}</span>
+            <span class="text-sm font-bold text-slate-700">🥡 Llevar: {{ metricas()!.totalLlevar }}</span>
+          </div>
+        </div>
+        <!-- Barra estética inferior de proporciones (simulada o fija de apoyo visual) -->
+        <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden mt-3 flex">
+          <div class="bg-slate-900 h-full" [style.width.%]="(metricas()!.totalLocal + metricas()!.totalLlevar) > 0 ? (metricas()!.totalLocal / (metricas()!.totalLocal + metricas()!.totalLlevar)) * 100 : 50"></div>
+          <div class="bg-amber-500 h-full" [style.width.%]="(metricas()!.totalLocal + metricas()!.totalLlevar) > 0 ? (metricas()!.totalLlevar / (metricas()!.totalLocal + metricas()!.totalLlevar)) * 100 : 50"></div>
         </div>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Entradas</span>
-        <div class="flex justify-between items-baseline mt-2">
-          <span class="text-sm font-bold text-slate-700">🥗 Con: {{ metricas()!.totalConEntrada }}</span>
-          <span class="text-sm font-bold text-slate-700">🚫 Sin: {{ metricas()!.totalSinEntrada }}</span>
+      <!-- Tarjeta 4: Entradas (Con barra de colores divisoria verde/naranja) -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Entradas</span>
+          <div class="flex justify-between items-baseline mt-2">
+            <span class="text-sm font-bold text-slate-700">🥗 Con: {{ metricas()!.totalConEntrada }}</span>
+            <span class="text-sm font-bold text-slate-700">🚫 Sin: {{ metricas()!.totalSinEntrada }}</span>
+          </div>
+        </div>
+        <!-- Barra estética inferior de entradas (Verde y Naranja/Rojo) -->
+        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-3 flex">
+          <div class="bg-emerald-500 h-full" [style.width.%]="(metricas()!.totalConEntrada + metricas()!.totalSinEntrada) > 0 ? (metricas()!.totalConEntrada / (metricas()!.totalConEntrada + metricas()!.totalSinEntrada)) * 100 : 50"></div>
+          <div class="bg-rose-500 h-full" [style.width.%]="(metricas()!.totalConEntrada + metricas()!.totalSinEntrada) > 0 ? (metricas()!.totalSinEntrada / (metricas()!.totalConEntrada + metricas()!.totalSinEntrada)) * 100 : 50"></div>
         </div>
       </div>
+
     </div>
 
     <!-- Tabla Ranking de Platos -->
@@ -70,7 +95,6 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            <!-- Nueva sintaxis @for de Angular con control de variables -->
             @for (plato of resumenPlatos; track plato.id; let i = $index) {
               @if (plato.vendidos > 0) {
                 <tr>
