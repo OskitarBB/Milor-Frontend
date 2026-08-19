@@ -72,11 +72,17 @@ export class MilorService {
     );
   }
 
-  eliminarPlato(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/carta/platos/${id}`).pipe(
-      tap(() => this.cargarCartaInicial())
-    );
-  }
+  eliminarPlato(id: number): Observable<any> {
+      return this.http.delete<any>(`${this.apiUrl}/carta/platos/${id}`).pipe(
+        tap((res) => {
+          if (res && res.platos) {
+            this.carta.set(res); // Actualiza la interfaz al instante si el backend responde con la carta
+          } else {
+            this.cargarCartaInicial();
+          }
+        })
+      );
+    }
 
   guardarEntrada(entrada: Entrada): Observable<Entrada> {
     return this.http.post<Entrada>(`${this.apiUrl}/carta/entradas`, entrada).pipe(
@@ -84,9 +90,15 @@ export class MilorService {
     );
   }
 
-  eliminarEntrada(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/carta/entradas/${id}`).pipe(
-      tap(() => this.cargarCartaInicial())
+eliminarEntrada(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/carta/entradas/${id}`).pipe(
+      tap((res) => {
+        if (res && res.entradas) {
+          this.carta.set(res); // Actualiza la interfaz al instante si el backend responde con la carta
+        } else {
+          this.cargarCartaInicial();
+        }
+      })
     );
   }
 
