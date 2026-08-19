@@ -54,4 +54,23 @@ export class AdminDashboardComponent {
       };
     });
   });
+
+  cerrarTurnoActual(): void {
+    const confirmacion = window.confirm(
+      '¿Estás seguro de cerrar el turno de hoy? \n\nEsto reseteará las estadísticas a cero y archivará las ventas actuales para iniciar un nuevo día.'
+    );
+
+    if (confirmacion) {
+      this.milorService.cerrarTurno().subscribe({
+        next: () => {
+          console.log('Turno cerrado exitosamente.');
+          // Nota: El dashboard se pondrá en cero automáticamente gracias al WebSocket y al tap() del servicio.
+        },
+        error: (err) => {
+          console.error('Error al cerrar el turno:', err);
+          alert('Hubo un problema al intentar cerrar el turno.');
+        }
+      });
+    }
+  }
 }

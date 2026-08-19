@@ -21,6 +21,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent)
   },
+  
+  {
+    path: 'admin/historial',
+loadComponent: () => import('./features/historial-dashboard/historial-dashboard').then(m => m.HistorialDashboardComponent)
+  },
+
   {
     path: '**',
     redirectTo: 'operador'

@@ -118,4 +118,23 @@ export class MilorService {
       })
     );
   }
+
+  cerrarTurno(): Observable<any> {
+    // Este endpoint lo crearemos en el backend luego. 
+    // Al llamarlo, el backend archivará las ventas de hoy, limpiará la carta y emitirá métricas en 0 por WebSocket.
+    return this.http.post(`${this.apiUrl}/turnos/cerrar`, {}).pipe(
+      tap(() => {
+        this.cargarCartaInicial();
+        this.cargarMetricasIniciales();
+      })
+    );
+  }
+
+  obtenerHistorial(fechaInicio: string, fechaFin: string): Observable<DashboardMetricasDTO> {
+    // Este endpoint traerá los datos filtrados para el nuevo dashboard histórico
+    return this.http.get<DashboardMetricasDTO>(`${this.apiUrl}/ventas/historico`, {
+      params: { inicio: fechaInicio, fin: fechaFin }
+    });
+  }
+
 }
