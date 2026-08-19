@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router'; // <-- AÑADIDO PARA ROUTERLINK
 import { MilorService } from '../../core/services/milor.service';
 import { ModalidadConsumo, Plato, Entrada, RegistroVentaRequest } from '../../core/models/milor.models';
 
@@ -12,7 +13,7 @@ interface ItemPedidoVista {
 @Component({
   selector: 'app-operador',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule], // <-- AÑADIDO A IMPORTS
   templateUrl: './operador.html',
   styleUrl: './operador.css'
 })
@@ -33,7 +34,6 @@ export class Operador {
   readonly mensajeError = signal<string | null>(null);
   readonly mensajeExito = signal<string | null>(null);
 
-  // Filtra para que al operador solo le lleguen los que tienen activo === true
   readonly platosDisponibles = computed(() => this.carta().platos.filter(p => p.activo !== false));
   readonly entradasDisponibles = computed(() => this.carta().entradas.filter(e => e.activo !== false));
 
@@ -42,19 +42,27 @@ export class Operador {
   });
 
   cambiarModalidad(m: ModalidadConsumo): void {
+    if (!this.milorService.turnoAbierto()) return;
     this.modalidad.set(m);
   }
 
   seleccionarPlato(plato: Plato): void {
+    if (!this.milorService.turnoAbierto()) return;
     this.platoSeleccionado.set(plato);
     this.mensajeError.set(null);
   }
 
   seleccionarEntrada(entrada: Entrada | 'SIN_ENTRADA'): void {
+    if (!this.milorService.turnoAbierto()) return;
     this.entradaSeleccionada.set(entrada);
   }
 
   agregarItem(): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard para registrar pedidos.');
+      return;
+    }
+
     const plato = this.platoSeleccionado();
     if (!plato || !plato.id) return;
 
@@ -80,6 +88,11 @@ export class Operador {
   }
 
   procesarPedido(): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard para registrar pedidos.');
+      return;
+    }
+
     if (this.pedidoActual().length === 0) return;
 
     const payload: RegistroVentaRequest = {

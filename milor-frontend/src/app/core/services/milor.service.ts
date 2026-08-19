@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { WebSocketService } from './websocket.service';
 import { CartaDiariaDTO, DashboardMetricasDTO } from '../models/milor.models';
+import { tap } from 'rxjs'; // <-- IMPORTACIÓN NECESARIA AÑADIDA AQUÍ
 
 @Injectable({
   providedIn: 'root'
@@ -12,13 +13,23 @@ export class MilorService {
   
   private readonly apiUrl = 'http://localhost:8080/api';
 
-  // Signals globales
   carta = signal<CartaDiariaDTO | null>(null);
   metricas = signal<DashboardMetricasDTO | null>(null);
+  turnoAbierto = signal<boolean>(false);
 
   constructor() {
     this.cargarCartaInicial();
+    this.verificarEstadoTurnoGlobal();
     this.iniciarWebSockets();
+  }
+
+  verificarEstadoTurnoGlobal(): void {
+    this.obtenerEstadoTurno().subscribe({
+      next: (turno) => {
+        this.turnoAbierto.set(turno && turno.estado === 'ABIERTO');
+      },
+      error: () => this.turnoAbierto.set(false)
+    });
   }
 
   private cargarCartaInicial(): void {
@@ -39,7 +50,6 @@ export class MilorService {
     });
   }
 
-  // --- MÉTODOS DE MÉTRICAS E HISTORIAL ---
   obtenerMetricas() {
     return this.http.get<DashboardMetricasDTO>(`${this.apiUrl}/ventas/metricas`);
   }
@@ -48,7 +58,6 @@ export class MilorService {
     return this.http.get<DashboardMetricasDTO>(`${this.apiUrl}/ventas/historico?inicio=${inicio}&fin=${fin}`);
   }
 
-  // --- MÉTODOS DE CARTA (PLATOS Y ENTRADAS) ---
   guardarPlato(plato: any) {
     return this.http.post<any>(`${this.apiUrl}/carta/platos`, plato);
   }
@@ -69,18 +78,20 @@ export class MilorService {
     return this.http.put<any>(`${this.apiUrl}/carta/precios`, precios);
   }
 
-  // --- MÉTODOS DE VENTAS (OPERADOR) ---
   registrarVenta(payload: any) {
     return this.http.post<any>(`${this.apiUrl}/ventas`, payload);
   }
 
-  // --- MÉTODOS DE GESTIÓN DE TURNOS ---
   abrirTurno() {
-    return this.http.post<any>(`${this.apiUrl}/turnos/abrir`, {});
+    return this.http.post<any>(`${this.apiUrl}/turnos/abrir`, {}).pipe(
+      tap(() => this.turnoAbierto.set(true))
+    );
   }
 
   cerrarTurno() {
-    return this.http.post<any>(`${this.apiUrl}/turnos/cerrar`, {});
+    return this.http.post<any>(`${this.apiUrl}/turnos/cerrar`, {}).pipe(
+      tap(() => this.turnoAbierto.set(false))
+    );
   }
 
   obtenerEstadoTurno() {

@@ -1,13 +1,14 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router'; // <-- AÑADIDO PARA ROUTERLINK
 import { MilorService } from '../../core/services/milor.service';
 import { CartaDiariaDTO, Plato, Entrada } from '../../core/models/milor.models';
 
 @Component({
   selector: 'app-admin-carta',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule], // <-- AÑADIDO A IMPORTS
   templateUrl: './admin-carta.html',
   styleUrl: './admin-carta.css'
 })
@@ -28,7 +29,6 @@ export class AdminCarta {
   guardadoExitoso = signal(false);
   mensajeAviso = signal<string | null>(null);
 
-  // Estados reactivos para modales de edición
   platoEnEdicion = signal<Plato | null>(null);
   entradaEnEdicion = signal<Entrada | null>(null);
 
@@ -49,6 +49,11 @@ export class AdminCarta {
   }
 
   agregarPlato(): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     const nombre = this.nuevoPlatoNombre().trim();
     if (!nombre) return;
 
@@ -63,21 +68,33 @@ export class AdminCarta {
         this.nuevoPlatoNombre.set('');
         this.nuevoPlatoStock.set(20);
         this.nuevoPlatoIlimitado.set(false);
-      }
+      },
+      error: (err) => alert(err.error?.message || 'Error al guardar el plato.')
     });
   }
 
   eliminarPlato(id?: number): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     if (!id) return;
     const plato = this.cartaEditable().platos.find(p => p.id === id);
     this.milorService.eliminarPlato(id).subscribe({
       next: () => {
         this.mostrarAviso(`Plato "${plato?.nombre || id}" eliminado definitivamente`);
-      }
+      },
+      error: (err) => alert(err.error?.message || 'Error al eliminar el plato.')
     });
   }
 
   togglePlatoActivo(id?: number): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     if (!id) return;
     const plato = this.cartaEditable().platos.find(p => p.id === id);
     if (plato) {
@@ -89,12 +106,17 @@ export class AdminCarta {
         next: () => {
           const estadoTexto = nuevoEstado ? 'Activo (Visible en Operador)' : 'Inactivo (Pausado)';
           this.mostrarAviso(`Plato "${plato.nombre}" cambiado a: ${estadoTexto}`);
-        }
+        },
+        error: (err) => alert(err.error?.message || 'Error al actualizar el estado del plato.')
       });
     }
   }
 
   abrirEditarPlato(plato: Plato): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
     this.platoEnEdicion.set({ ...plato });
   }
 
@@ -103,6 +125,11 @@ export class AdminCarta {
   }
 
   guardarPlatoEditado(): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     const plato = this.platoEnEdicion();
     if (!plato || !plato.nombre.trim()) return;
 
@@ -113,11 +140,17 @@ export class AdminCarta {
       next: () => {
         this.mostrarAviso(`Plato "${plato.nombre}" actualizado correctamente`);
         this.cerrarEditarPlato();
-      }
+      },
+      error: (err) => alert(err.error?.message || 'Error al actualizar el plato.')
     });
   }
 
   agregarEntrada(): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     const nombre = this.nuevaEntradaNombre().trim();
     if (!nombre) return;
 
@@ -128,21 +161,33 @@ export class AdminCarta {
       next: () => {
         this.mostrarAviso(`Entrada "${nombre}" agregada con éxito`);
         this.nuevaEntradaNombre.set('');
-      }
+      },
+      error: (err) => alert(err.error?.message || 'Error al guardar la entrada.')
     });
   }
 
   eliminarEntrada(id?: number): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     if (!id) return;
     const entrada = this.cartaEditable().entradas.find(e => e.id === id);
     this.milorService.eliminarEntrada(id).subscribe({
       next: () => {
         this.mostrarAviso(`Entrada "${entrada?.nombre || id}" eliminada definitivamente`);
-      }
+      },
+      error: (err) => alert(err.error?.message || 'Error al eliminar la entrada.')
     });
   }
 
   toggleEntradaActiva(id?: number): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     if (!id) return;
     const entrada = this.cartaEditable().entradas.find(e => e.id === id);
     if (entrada) {
@@ -154,12 +199,17 @@ export class AdminCarta {
         next: () => {
           const estadoTexto = nuevoEstado ? 'Activa (Visible en Operador)' : 'Inactiva (Pausada)';
           this.mostrarAviso(`Entrada "${entrada.nombre}" cambiada a: ${estadoTexto}`);
-        }
+        },
+        error: (err) => alert(err.error?.message || 'Error al actualizar el estado de la entrada.')
       });
     }
   }
 
   abrirEditarEntrada(entrada: Entrada): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
     this.entradaEnEdicion.set({ ...entrada });
   }
 
@@ -168,6 +218,11 @@ export class AdminCarta {
   }
 
   guardarEntradaEditada(): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     const entrada = this.entradaEnEdicion();
     if (!entrada || !entrada.nombre.trim()) return;
 
@@ -175,17 +230,24 @@ export class AdminCarta {
       next: () => {
         this.mostrarAviso(`Entrada "${entrada.nombre}" actualizada correctamente`);
         this.cerrarEditarEntrada();
-      }
+      },
+      error: (err) => alert(err.error?.message || 'Error al actualizar la entrada.')
     });
   }
 
   guardarConfiguracion(): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
     const precios = this.cartaEditable().precios;
     this.milorService.actualizarPrecios(precios).subscribe({
       next: () => {
         this.guardadoExitoso.set(true);
         setTimeout(() => this.guardadoExitoso.set(false), 3000);
-      }
+      },
+      error: (err) => alert(err.error?.message || 'Error al actualizar los precios.')
     });
   }
 }
