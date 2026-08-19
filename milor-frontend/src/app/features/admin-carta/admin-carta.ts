@@ -1,8 +1,9 @@
-import { Component, inject, signal, computed, effect } from '@angular/core';
+
+import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MilorService } from '../../core/services/milor.service';
-import { CartaDiariaDTO } from '../../core/models/milor.models';
+import { CartaDiariaDTO, Plato, Entrada } from '../../core/models/milor.models';
 
 @Component({
   selector: 'app-admin-carta',
@@ -26,6 +27,10 @@ export class AdminCarta {
 
   nuevaEntradaNombre = signal('');
   guardadoExitoso = signal(false);
+
+  // Estados reactivos para modales de edición
+  platoEnEdicion = signal<Plato | null>(null);
+  entradaEnEdicion = signal<Entrada | null>(null);
 
   constructor() {
     effect(() => {
@@ -71,6 +76,26 @@ export class AdminCarta {
     }
   }
 
+  abrirEditarPlato(plato: Plato): void {
+    this.platoEnEdicion.set({ ...plato });
+  }
+
+  cerrarEditarPlato(): void {
+    this.platoEnEdicion.set(null);
+  }
+
+  guardarPlatoEditado(): void {
+    const plato = this.platoEnEdicion();
+    if (!plato || !plato.nombre.trim()) return;
+
+    this.milorService.guardarPlato({
+      ...plato,
+      stock: plato.esIlimitado ? 0 : Number(plato.stock)
+    }).subscribe({
+      next: () => this.cerrarEditarPlato()
+    });
+  }
+
   agregarEntrada(): void {
     const nombre = this.nuevaEntradaNombre().trim();
     if (!nombre) return;
@@ -100,6 +125,23 @@ export class AdminCarta {
     }
   }
 
+  abrirEditarEntrada(entrada: Entrada): void {
+    this.entradaEnEdicion.set({ ...entrada });
+  }
+
+  cerrarEditarEntrada(): void {
+    this.entradaEnEdicion.set(null);
+  }
+
+  guardarEntradaEditada(): void {
+    const entrada = this.entradaEnEdicion();
+    if (!entrada || !entrada.nombre.trim()) return;
+
+    this.milorService.guardarEntrada(entrada).subscribe({
+      next: () => this.cerrarEditarEntrada()
+    });
+  }
+
   guardarConfiguracion(): void {
     const precios = this.cartaEditable().precios;
     this.milorService.actualizarPrecios(precios).subscribe({
@@ -110,3 +152,4 @@ export class AdminCarta {
     });
   }
 }
+
