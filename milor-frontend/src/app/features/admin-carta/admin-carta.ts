@@ -26,6 +26,7 @@ export class AdminCarta {
 
   nuevaEntradaNombre = signal('');
   guardadoExitoso = signal(false);
+  mensajeAviso = signal<string | null>(null);
 
   // Estados reactivos para modales de edición
   platoEnEdicion = signal<Plato | null>(null);
@@ -40,6 +41,13 @@ export class AdminCarta {
     }, { allowSignalWrites: true });
   }
 
+  private mostrarAviso(texto: string): void {
+    this.mensajeAviso.set(texto);
+    setTimeout(() => {
+      this.mensajeAviso.set(null);
+    }, 3500);
+  }
+
   agregarPlato(): void {
     const nombre = this.nuevoPlatoNombre().trim();
     if (!nombre) return;
@@ -51,6 +59,7 @@ export class AdminCarta {
       activo: true
     }).subscribe({
       next: () => {
+        this.mostrarAviso(`Plato "${nombre}" agregado con éxito`);
         this.nuevoPlatoNombre.set('');
         this.nuevoPlatoStock.set(20);
         this.nuevoPlatoIlimitado.set(false);
@@ -59,19 +68,29 @@ export class AdminCarta {
   }
 
   eliminarPlato(id?: number): void {
-    if (id) {
-      this.milorService.eliminarPlato(id).subscribe();
-    }
+    if (!id) return;
+    const plato = this.cartaEditable().platos.find(p => p.id === id);
+    this.milorService.eliminarPlato(id).subscribe({
+      next: () => {
+        this.mostrarAviso(`Plato "${plato?.nombre || id}" eliminado definitivamente`);
+      }
+    });
   }
 
   togglePlatoActivo(id?: number): void {
     if (!id) return;
     const plato = this.cartaEditable().platos.find(p => p.id === id);
     if (plato) {
+      const nuevoEstado = !plato.activo;
       this.milorService.guardarPlato({
         ...plato,
-        activo: !plato.activo
-      }).subscribe();
+        activo: nuevoEstado
+      }).subscribe({
+        next: () => {
+          const estadoTexto = nuevoEstado ? 'Activo (Visible en Operador)' : 'Inactivo (Pausado)';
+          this.mostrarAviso(`Plato "${plato.nombre}" cambiado a: ${estadoTexto}`);
+        }
+      });
     }
   }
 
@@ -91,7 +110,10 @@ export class AdminCarta {
       ...plato,
       stock: plato.esIlimitado ? 0 : Number(plato.stock)
     }).subscribe({
-      next: () => this.cerrarEditarPlato()
+      next: () => {
+        this.mostrarAviso(`Plato "${plato.nombre}" actualizado correctamente`);
+        this.cerrarEditarPlato();
+      }
     });
   }
 
@@ -103,24 +125,37 @@ export class AdminCarta {
       nombre: nombre,
       activo: true
     }).subscribe({
-      next: () => this.nuevaEntradaNombre.set('')
+      next: () => {
+        this.mostrarAviso(`Entrada "${nombre}" agregada con éxito`);
+        this.nuevaEntradaNombre.set('');
+      }
     });
   }
 
   eliminarEntrada(id?: number): void {
-    if (id) {
-      this.milorService.eliminarEntrada(id).subscribe();
-    }
+    if (!id) return;
+    const entrada = this.cartaEditable().entradas.find(e => e.id === id);
+    this.milorService.eliminarEntrada(id).subscribe({
+      next: () => {
+        this.mostrarAviso(`Entrada "${entrada?.nombre || id}" eliminada definitivamente`);
+      }
+    });
   }
 
   toggleEntradaActiva(id?: number): void {
     if (!id) return;
     const entrada = this.cartaEditable().entradas.find(e => e.id === id);
     if (entrada) {
+      const nuevoEstado = !entrada.activo;
       this.milorService.guardarEntrada({
         ...entrada,
-        activo: !entrada.activo
-      }).subscribe();
+        activo: nuevoEstado
+      }).subscribe({
+        next: () => {
+          const estadoTexto = nuevoEstado ? 'Activa (Visible en Operador)' : 'Inactiva (Pausada)';
+          this.mostrarAviso(`Entrada "${entrada.nombre}" cambiada a: ${estadoTexto}`);
+        }
+      });
     }
   }
 
@@ -137,7 +172,10 @@ export class AdminCarta {
     if (!entrada || !entrada.nombre.trim()) return;
 
     this.milorService.guardarEntrada(entrada).subscribe({
-      next: () => this.cerrarEditarEntrada()
+      next: () => {
+        this.mostrarAviso(`Entrada "${entrada.nombre}" actualizada correctamente`);
+        this.cerrarEditarEntrada();
+      }
     });
   }
 
