@@ -1,8 +1,7 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { MilorService } from '../../core/services/milor.service';
 
-// 1. Declaramos la interfaz para que Angular no marque error en el HTML
 interface PlatoResumen {
   id: string;
   nombre: string;
@@ -18,8 +17,40 @@ interface PlatoResumen {
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css']
 })
-export class AdminDashboardComponent {
+export class AdminDashboardComponent implements OnInit {
   private readonly milorService = inject(MilorService);
+
+  turnoAbierto = signal<boolean>(false);
+  cargandoTurno = signal<boolean>(false);
+
+  ngOnInit(): void {
+    this.verificarEstadoTurno();
+    this.cargarMetricasAlRecargar(); // <--- LLAMADA CLAVE PARA EVITAR QUE SE QUEDE EN CERO
+  }
+
+  verificarEstadoTurno(): void {
+    this.milorService.obtenerEstadoTurno().subscribe({
+      next: (turno) => {
+        this.turnoAbierto.set(turno && turno.estado === 'ABIERTO');
+      },
+      error: () => {
+        this.turnoAbierto.set(false);
+      }
+    });
+  }
+
+  // Fuerza la obtención de métricas actuales al presionar F5
+  cargarMetricasAlRecargar(): void {
+    this.milorService.obtenerMetricas().subscribe({
+      next: (data) => {
+        // Actualizamos directamente el signal global de métricas del servicio
+        this.milorService.metricas.set(data);
+      },
+      error: (err) => {
+        console.error('Error al sincronizar métricas al actualizar:', err);
+      }
+    });
+  }
 
   readonly metricas = computed(() => {
     return this.milorService.metricas() || {
@@ -38,7 +69,6 @@ export class AdminDashboardComponent {
     return this.metricas().ultimasVentas || [];
   });
 
-  // 2. Aplicamos la interfaz y mapeamos la propiedad 'activo'
   readonly resumenPlatos = computed<PlatoResumen[]>(() => {
     const conteo = this.metricas().conteoPorPlato;
     if (!conteo) return [];
@@ -50,25 +80,46 @@ export class AdminDashboardComponent {
         nombre: item?.nombre || 'Plato',
         vendidos: item?.vendidos || 0,
         stockRestante: item?.stockRestante ?? '0',
-        activo: item?.activo ?? true // Extraemos el estado real
+        activo: item?.activo ?? true
       };
     });
   });
 
-  cerrarTurnoActual(): void {
-    const confirmacion = window.confirm(
-      '¿Estás seguro de cerrar el turno de hoy? \n\nEsto reseteará las estadísticas a cero y archivará las ventas actuales para iniciar un nuevo día.'
-    );
+  gestionarTurno(): void {
+    if (this.turnoAbierto()) {
+      const confirmacion = window.confirm(
+        '¿Estás seguro de cerrar el turno actual?\n\nEsto guardará las estadísticas y reseteará el panel para iniciar un nuevo ciclo.'
+      );
 
-    if (confirmacion) {
-      this.milorService.cerrarTurno().subscribe({
+      if (confirmacion) {
+        this.cargandoTurno.set(true);
+        this.milorService.cerrarTurno().subscribe({
+          next: () => {
+            this.turnoAbierto.set(false);
+            this.cargandoTurno.set(false);
+            this.verificarEstadoTurno();
+            this.cargarMetricasAlRecargar();
+          },
+          error: (err) => {
+            console.error('Error al cerrar el turno:', err);
+            alert('Hubo un problema al intentar cerrar el turno.');
+            this.cargandoTurno.set(false);
+          }
+        });
+      }
+    } else {
+      this.cargandoTurno.set(true);
+      this.milorService.abrirTurno().subscribe({
         next: () => {
-          console.log('Turno cerrado exitosamente.');
-          // Nota: El dashboard se pondrá en cero automáticamente gracias al WebSocket y al tap() del servicio.
+          this.turnoAbierto.set(true);
+          this.cargandoTurno.set(false);
+          this.verificarEstadoTurno();
+          this.cargarMetricasAlRecargar();
         },
         error: (err) => {
-          console.error('Error al cerrar el turno:', err);
-          alert('Hubo un problema al intentar cerrar el turno.');
+          console.error('Error al abrir el turno:', err);
+          alert('Hubo un problema al intentar abrir el turno.');
+          this.cargandoTurno.set(false);
         }
       });
     }
