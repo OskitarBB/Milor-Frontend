@@ -2,6 +2,15 @@ import { Component, computed, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { MilorService } from '../../core/services/milor.service';
 
+// 1. Declaramos la interfaz para que Angular no marque error en el HTML
+interface PlatoResumen {
+  id: string;
+  nombre: string;
+  vendidos: number;
+  stockRestante: string;
+  activo: boolean; 
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -29,12 +38,20 @@ export class AdminDashboardComponent {
     return this.metricas().ultimasVentas || [];
   });
 
-  readonly resumenPlatos = computed(() => {
+  // 2. Aplicamos la interfaz y mapeamos la propiedad 'activo'
+  readonly resumenPlatos = computed<PlatoResumen[]>(() => {
     const conteo = this.metricas().conteoPorPlato;
     if (!conteo) return [];
-    return Object.keys(conteo).map(id => ({
-      id,
-      ...conteo[id]
-    }));
+    
+    return Object.keys(conteo).map(key => {
+      const item: any = conteo[Number(key)] || conteo[key];
+      return {
+        id: key,
+        nombre: item?.nombre || 'Plato',
+        vendidos: item?.vendidos || 0,
+        stockRestante: item?.stockRestante ?? '0',
+        activo: item?.activo ?? true // Extraemos el estado real
+      };
+    });
   });
 }

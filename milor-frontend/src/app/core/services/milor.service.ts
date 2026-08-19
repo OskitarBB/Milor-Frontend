@@ -68,43 +68,54 @@ export class MilorService {
 
   guardarPlato(plato: Plato): Observable<Plato> {
     return this.http.post<Plato>(`${this.apiUrl}/carta/platos`, plato).pipe(
-      tap(() => this.cargarCartaInicial())
+      tap(() => {
+        this.cargarCartaInicial();
+        this.cargarMetricasIniciales(); // <-- Agregado
+      })
     );
   }
 
   eliminarPlato(id: number): Observable<any> {
-      return this.http.delete<any>(`${this.apiUrl}/carta/platos/${id}`).pipe(
-        tap((res) => {
-          if (res && res.platos) {
-            this.carta.set(res); // Actualiza la interfaz al instante si el backend responde con la carta
-          } else {
-            this.cargarCartaInicial();
-          }
-        })
-      );
-    }
-
-  guardarEntrada(entrada: Entrada): Observable<Entrada> {
-    return this.http.post<Entrada>(`${this.apiUrl}/carta/entradas`, entrada).pipe(
-      tap(() => this.cargarCartaInicial())
-    );
-  }
-
-eliminarEntrada(id: number): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/carta/entradas/${id}`).pipe(
+    return this.http.delete<any>(`${this.apiUrl}/carta/platos/${id}`).pipe(
       tap((res) => {
-        if (res && res.entradas) {
-          this.carta.set(res); // Actualiza la interfaz al instante si el backend responde con la carta
+        if (res && res.platos) {
+          this.carta.set(res);
         } else {
           this.cargarCartaInicial();
         }
+        this.cargarMetricasIniciales(); // <-- Agregado
+      })
+    );
+  }
+
+  guardarEntrada(entrada: Entrada): Observable<Entrada> {
+    return this.http.post<Entrada>(`${this.apiUrl}/carta/entradas`, entrada).pipe(
+      tap(() => {
+        this.cargarCartaInicial();
+        this.cargarMetricasIniciales(); // <-- Agregado
+      })
+    );
+  }
+
+  eliminarEntrada(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/carta/entradas/${id}`).pipe(
+      tap((res) => {
+        if (res && res.entradas) {
+          this.carta.set(res);
+        } else {
+          this.cargarCartaInicial();
+        }
+        this.cargarMetricasIniciales(); // <-- Agregado
       })
     );
   }
 
   actualizarPrecios(precios: ConfiguracionPrecio): Observable<ConfiguracionPrecio> {
     return this.http.put<ConfiguracionPrecio>(`${this.apiUrl}/carta/precios`, precios).pipe(
-      tap(() => this.cargarCartaInicial())
+      tap(() => {
+        this.cargarCartaInicial();
+        this.cargarMetricasIniciales(); // <-- Agregado
+      })
     );
   }
 }
