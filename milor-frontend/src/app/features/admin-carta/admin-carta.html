@@ -1,0 +1,164 @@
+<div class="max-w-6xl mx-auto p-4 space-y-6">
+
+  <!-- Encabezado con Botón Guardar -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+    <div>
+      <h1 class="text-xl font-black text-slate-800">Configuración de Carta del Día</h1>
+      <p class="text-xs text-slate-500">Ajusta los platos disponibles, stocks de apertura y precios para el turno actual.</p>
+    </div>
+    
+    <button 
+      (click)="guardarConfiguracion()"
+      class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition active:scale-95 flex items-center gap-2">
+      💾 Guardar Carta Diaria
+    </button>
+  </div>
+
+  @if (guardadoExitoso()) {
+    <div class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold rounded-xl text-center">
+      ✅ ¡La carta ha sido actualizada y los cambios ya son visibles en el módulo de Operador!
+    </div>
+  }
+
+  <!-- 1. Configuración de Precios -->
+  <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-3">1. Estructura de Precios Base</span>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Menú Completo (Segundo + Entrada) [S/]</label>
+        <input 
+          type="number" 
+          [(ngModel)]="cartaEditable().precios.menuCompleto"
+          class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-amber-500" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Solo Segundo (Segundo + Sin Entrada) [S/]</label>
+        <input 
+          type="number" 
+          [(ngModel)]="cartaEditable().precios.soloSegundo"
+          class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:outline-amber-500" />
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- 2. Gestión de Platos de Fondo -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">2. Platos de Fondo (Segundos)</span>
+
+      <!-- Formulario para agregar nuevo plato -->
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+        <input 
+          type="text" 
+          [ngModel]="nuevoPlatoNombre()" 
+          (ngModelChange)="nuevoPlatoNombre.set($event)"
+          placeholder="Nombre del plato (ej. Arroz con Pollo)" 
+          class="w-full p-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-amber-500" />
+        
+        <div class="flex items-center gap-3">
+          <div class="flex-1">
+            <input 
+              type="number" 
+              [disabled]="nuevoPlatoIlimitado()"
+              [ngModel]="nuevoPlatoStock()" 
+              (ngModelChange)="nuevoPlatoStock.set($event)"
+              placeholder="Stock inicial" 
+              class="w-full p-2 text-xs bg-white border border-slate-200 rounded-lg disabled:opacity-40" />
+          </div>
+          
+          <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer select-none">
+            <input 
+              type="checkbox" 
+              [ngModel]="nuevoPlatoIlimitado()" 
+              (ngModelChange)="nuevoPlatoIlimitado.set($event)"
+              class="rounded text-amber-500" />
+            Ilimitado
+          </label>
+
+          <button 
+            (click)="agregarPlato()"
+            class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition active:scale-95">
+            + Agregar
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de platos configurados -->
+      <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+        @for (plato of cartaEditable().platos; track plato.id) {
+          <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+            <div class="flex-1 pr-2">
+              <span class="text-xs font-bold text-slate-800 block" [class.line-through]="!plato.activo">{{ plato.nombre }}</span>
+              <span class="text-[11px] text-slate-500">
+                {{ plato.esIlimitado ? 'Stock: Ilimitado' : 'Stock actual: ' + plato.stock }}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button 
+                (click)="togglePlatoActivo(plato.id)"
+                [class]="plato.activo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'"
+                class="px-2.5 py-1 rounded-lg text-xs font-bold transition">
+                {{ plato.activo ? 'Activo' : 'Pausado' }}
+              </button>
+              <button 
+                (click)="eliminarPlato(plato.id)"
+                class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 rounded-full text-xs font-bold">
+                ✕
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- 3. Gestión de Entradas -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">3. Entradas del Día</span>
+
+      <!-- Formulario para agregar nueva entrada -->
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex gap-2">
+        <input 
+          type="text" 
+          [ngModel]="nuevaEntradaNombre()" 
+          (ngModelChange)="nuevaEntradaNombre.set($event)"
+          placeholder="Nombre de la entrada (ej. Causa Rellena)" 
+          class="flex-1 p-2 text-xs bg-white border border-slate-200 rounded-lg focus:outline-amber-500" />
+
+        <button 
+          (click)="agregarEntrada()"
+          class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition active:scale-95">
+          + Agregar
+        </button>
+      </div>
+
+      <!-- Lista de entradas configuradas -->
+      <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+        @for (entrada of cartaEditable().entradas; track entrada.id) {
+          <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+            <span class="text-xs font-bold text-slate-800 flex-1 pr-2" [class.line-through]="!entrada.activo">
+              🥗 {{ entrada.nombre }}
+            </span>
+
+            <div class="flex items-center gap-2">
+              <button 
+                (click)="toggleEntradaActiva(entrada.id)"
+                [class]="entrada.activo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'"
+                class="px-2.5 py-1 rounded-lg text-xs font-bold transition">
+                {{ entrada.activo ? 'Activa' : 'Pausada' }}
+              </button>
+              <button 
+                (click)="eliminarEntrada(entrada.id)"
+                class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 rounded-full text-xs font-bold">
+                ✕
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+</div>
