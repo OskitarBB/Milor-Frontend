@@ -33,6 +33,7 @@ export class Operador {
   readonly mensajeError = signal<string | null>(null);
   readonly mensajeExito = signal<string | null>(null);
 
+  // Filtra para que al operador solo le lleguen los que tienen activo === true
   readonly platosDisponibles = computed(() => this.carta().platos.filter(p => p.activo !== false));
   readonly entradasDisponibles = computed(() => this.carta().entradas.filter(e => e.activo !== false));
 
