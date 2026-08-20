@@ -6,19 +6,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (usuarioGuardado) {
     try {
       const user = JSON.parse(usuarioGuardado);
-      if (user && user.rol) {
-        // Clonamos la petición y le agregamos la cabecera X-User-Role
+      if (user && user.token) {
+        // Adjuntamos el token JWT en cada petición HTTP
         const reqClonada = req.clone({
           setHeaders: {
-            'X-User-Role': user.rol
+            Authorization: `Bearer ${user.token}`
           }
         });
         return next(reqClonada);
       }
     } catch (e) {
-      console.error('Error al parsear usuario de localStorage', e);
+      console.error('Error al parsear token de localStorage', e);
     }
   }
 
   return next(req);
-}
+};
