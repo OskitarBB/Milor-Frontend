@@ -22,6 +22,9 @@ export class AdminDashboardComponent implements OnInit {
 
   turnoAbierto = signal<boolean>(false);
   cargandoTurno = signal<boolean>(false);
+  
+  // 🚀 Control del modal de confirmación ('ABRIR' | 'CERRAR' | null)
+  modalAccion = signal<'ABRIR' | 'CERRAR' | null>(null);
 
   ngOnInit(): void {
     this.verificarEstadoTurno();
@@ -83,30 +86,36 @@ export class AdminDashboardComponent implements OnInit {
     });
   });
 
-  gestionarTurno(): void {
-    if (this.turnoAbierto()) {
-      const confirmacion = window.confirm(
-        '¿Estás seguro de cerrar el turno actual?\n\nEsto guardará las estadísticas y reseteará el panel para iniciar un nuevo ciclo.'
-      );
+  abrirModal(accion: 'ABRIR' | 'CERRAR'): void {
+    this.modalAccion.set(accion);
+  }
 
-      if (confirmacion) {
-        this.cargandoTurno.set(true);
-        this.milorService.cerrarTurno().subscribe({
-          next: () => {
-            this.turnoAbierto.set(false);
-            this.cargandoTurno.set(false);
-            this.verificarEstadoTurno();
-            this.cargarMetricasAlRecargar();
-          },
-          error: (err) => {
-            console.error('Error al cerrar el turno:', err);
-            alert('Hubo un problema al intentar cerrar el turno.');
-            this.cargandoTurno.set(false);
-          }
-        });
-      }
+  cerrarModal(): void {
+    this.modalAccion.set(null);
+  }
+
+  ejecutarAccionTurno(): void {
+    const accion = this.modalAccion();
+    if (!accion) return;
+
+    this.cargandoTurno.set(true);
+    this.cerrarModal();
+
+    if (accion === 'CERRAR') {
+      this.milorService.cerrarTurno().subscribe({
+        next: () => {
+          this.turnoAbierto.set(false);
+          this.cargandoTurno.set(false);
+          this.verificarEstadoTurno();
+          this.cargarMetricasAlRecargar();
+        },
+        error: (err) => {
+          console.error('Error al cerrar el turno:', err);
+          alert('Hubo un problema al intentar cerrar el turno.');
+          this.cargandoTurno.set(false);
+        }
+      });
     } else {
-      this.cargandoTurno.set(true);
       this.milorService.abrirTurno().subscribe({
         next: () => {
           this.turnoAbierto.set(true);
