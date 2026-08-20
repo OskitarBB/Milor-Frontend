@@ -34,9 +34,10 @@ export class Operador {
   readonly mensajeError = signal<string | null>(null);
   readonly mensajeExito = signal<string | null>(null);
 
-  // 🚀 Se eliminó el filtro para permitir que se listen todos los platos y la vista refleje su estado inactivo
   readonly platosDisponibles = computed(() => this.carta().platos);
-  readonly entradasDisponibles = computed(() => this.carta().entradas.filter(e => e.activo !== false));
+  
+  // 🚀 Se muestran todas las entradas para reflejar su estado inactivo de forma visual
+  readonly entradasDisponibles = computed(() => this.carta().entradas);
 
   readonly totalPedido = computed(() => {
     return this.pedidoActual().reduce((acc, item) => acc + item.subtotal, 0);
@@ -48,7 +49,6 @@ export class Operador {
   }
 
   seleccionarPlato(plato: Plato): void {
-    // Bloquea la selección si el turno está cerrado o si el plato está inactivo
     if (!this.milorService.turnoAbierto() || plato.activo === false) return;
     this.platoSeleccionado.set(plato);
     this.mensajeError.set(null);
@@ -56,6 +56,8 @@ export class Operador {
 
   seleccionarEntrada(entrada: Entrada | 'SIN_ENTRADA'): void {
     if (!this.milorService.turnoAbierto()) return;
+    // 🛡️ Bloquea la selección si la entrada está inactiva
+    if (entrada !== 'SIN_ENTRADA' && entrada.activo === false) return;
     this.entradaSeleccionada.set(entrada);
   }
 
