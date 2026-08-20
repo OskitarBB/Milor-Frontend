@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -24,8 +24,11 @@ export class AdminCarta {
   nuevoPlatoNombre = signal('');
   nuevoPlatoStock = signal(20);
   nuevoPlatoIlimitado = signal(false);
+  mostrarSugerenciasPlatos = signal(false); // 🚀 Control de visibilidad del dropdown
 
   nuevaEntradaNombre = signal('');
+  mostrarSugerenciasEntradas = signal(false); // 🚀 Control de visibilidad del dropdown
+
   guardadoExitoso = signal(false);
   mensajeAviso = signal<string | null>(null);
 
@@ -41,6 +44,56 @@ export class AdminCarta {
     }, { allowSignalWrites: true });
   }
 
+  private normalizarTexto(texto: string): string {
+    if (!texto) return '';
+    return texto
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  private formatearTitulo(texto: string): string {
+    if (!texto) return '';
+    return texto
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/\b\w/g, letra => letra.toUpperCase());
+  }
+
+  onPlatoInput(valor: string): void {
+    this.nuevoPlatoNombre.set(valor);
+    this.mostrarSugerenciasPlatos.set(true);
+  }
+
+  onEntradaInput(valor: string): void {
+    this.nuevaEntradaNombre.set(valor);
+    this.mostrarSugerenciasEntradas.set(true);
+  }
+
+  // 🔍 Buscador predictivo tolerante a tildes y mayúsculas para platos
+  readonly platosSugeridos = computed(() => {
+    if (!this.mostrarSugerenciasPlatos()) return [];
+    const query = this.normalizarTexto(this.nuevoPlatoNombre());
+    if (!query || query.length < 2) return [];
+    
+    return this.cartaEditable().platos.filter(p => 
+      !p.activo && this.normalizarTexto(p.nombre).includes(query)
+    );
+  });
+
+  // 🔍 Buscador predictivo tolerante a tildes y mayúsculas para entradas
+  readonly entradasSugeridas = computed(() => {
+    if (!this.mostrarSugerenciasEntradas()) return [];
+    const query = this.normalizarTexto(this.nuevaEntradaNombre());
+    if (!query || query.length < 2) return [];
+    
+    return this.cartaEditable().entradas.filter(e => 
+      !e.activo && this.normalizarTexto(e.nombre).includes(query)
+    );
+  });
+
   private mostrarAviso(texto: string): void {
     this.mensajeAviso.set(texto);
     setTimeout(() => {
@@ -54,23 +107,74 @@ export class AdminCarta {
       return;
     }
 
-    const nombre = this.nuevoPlatoNombre().trim();
-    if (!nombre) return;
+    const nombreFormateado = this.formatearTitulo(this.nuevoPlatoNombre());
+    if (!nombreFormateado) return;
 
-    this.milorService.guardarPlato({
-      nombre: nombre,
+    const existente = this.cartaEditable().platos.find(p => 
+      this.normalizarTexto(p.nombre) === this.normalizarTexto(nombreFormateado)
+    );
+
+    const payload = {
+      id: existente ? existente.id : undefined,
+      nombre: nombreFormateado,
       stock: this.nuevoPlatoIlimitado() ? 0 : Number(this.nuevoPlatoStock()),
       esIlimitado: this.nuevoPlatoIlimitado(),
       activo: true
-    }).subscribe({
+    };
+
+    this.milorService.guardarPlato(payload).subscribe({
       next: () => {
-        this.mostrarAviso(`Plato "${nombre}" agregado con éxito`);
+        this.mostrarAviso(`Plato "${nombreFormateado}" agregado con éxito`);
         this.nuevoPlatoNombre.set('');
         this.nuevoPlatoStock.set(20);
         this.nuevoPlatoIlimitado.set(false);
+        this.mostrarSugerenciasPlatos.set(false);
       },
       error: (err) => alert(err.error?.message || 'Error al guardar el plato.')
     });
+  }
+
+  seleccionarPlatoSugerido(plato: Plato): void {
+    this.nuevoPlatoNombre.set(plato.nombre);
+    if (plato.stock !== undefined && plato.stock > 0) {
+      this.nuevoPlatoStock.set(plato.stock);
+    }
+    this.nuevoPlatoIlimitado.set(!!plato.esIlimitado);
+    this.mostrarSugerenciasPlatos.set(false); // Oculta el desplegable y libera el botón de agregar
+  }
+
+  agregarEntrada(): void {
+    if (!this.milorService.turnoAbierto()) {
+      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
+      return;
+    }
+
+    const nombreFormateado = this.formatearTitulo(this.nuevaEntradaNombre());
+    if (!nombreFormateado) return;
+
+    const existente = this.cartaEditable().entradas.find(e => 
+      this.normalizarTexto(e.nombre) === this.normalizarTexto(nombreFormateado)
+    );
+
+    const payload = {
+      id: existente ? existente.id : undefined,
+      nombre: nombreFormateado,
+      activo: true
+    };
+
+    this.milorService.guardarEntrada(payload).subscribe({
+      next: () => {
+        this.mostrarAviso(`Entrada "${nombreFormateado}" agregada con éxito`);
+        this.nuevaEntradaNombre.set('');
+        this.mostrarSugerenciasEntradas.set(false);
+      },
+      error: (err) => alert(err.error?.message || 'Error al guardar la entrada.')
+    });
+  }
+
+  seleccionarEntradaSugerida(entrada: Entrada): void {
+    this.nuevaEntradaNombre.set(entrada.nombre);
+    this.mostrarSugerenciasEntradas.set(false); // Oculta el desplegable y libera el botón de agregar
   }
 
   eliminarPlato(id?: number): void {
@@ -104,7 +208,6 @@ export class AdminCarta {
         activo: nuevoEstado
       }).subscribe({
         next: () => {
-          // 🚀 Actualización visual instantánea en el signal local
           this.cartaEditable.update(current => ({
             ...current,
             platos: current.platos.map(p => p.id === id ? { ...p, activo: nuevoEstado } : p)
@@ -139,6 +242,8 @@ export class AdminCarta {
     const plato = this.platoEnEdicion();
     if (!plato || !plato.nombre.trim()) return;
 
+    plato.nombre = this.formatearTitulo(plato.nombre);
+
     this.milorService.guardarPlato({
       ...plato,
       stock: plato.esIlimitado ? 0 : Number(plato.stock)
@@ -148,27 +253,6 @@ export class AdminCarta {
         this.cerrarEditarPlato();
       },
       error: (err) => alert(err.error?.message || 'Error al actualizar el plato.')
-    });
-  }
-
-  agregarEntrada(): void {
-    if (!this.milorService.turnoAbierto()) {
-      alert('Acción bloqueada: Debe abrir un turno en el Dashboard antes de modificar la carta.');
-      return;
-    }
-
-    const nombre = this.nuevaEntradaNombre().trim();
-    if (!nombre) return;
-
-    this.milorService.guardarEntrada({
-      nombre: nombre,
-      activo: true
-    }).subscribe({
-      next: () => {
-        this.mostrarAviso(`Entrada "${nombre}" agregada con éxito`);
-        this.nuevaEntradaNombre.set('');
-      },
-      error: (err) => alert(err.error?.message || 'Error al guardar la entrada.')
     });
   }
 
@@ -203,7 +287,6 @@ export class AdminCarta {
         activo: nuevoEstado
       }).subscribe({
         next: () => {
-          // 🚀 Actualización visual instantánea en el signal local de entradas
           this.cartaEditable.update(current => ({
             ...current,
             entradas: current.entradas.map(e => e.id === id ? { ...e, activo: nuevoEstado } : e)
@@ -237,6 +320,8 @@ export class AdminCarta {
 
     const entrada = this.entradaEnEdicion();
     if (!entrada || !entrada.nombre.trim()) return;
+
+    entrada.nombre = this.formatearTitulo(entrada.nombre);
 
     this.milorService.guardarEntrada(entrada).subscribe({
       next: () => {

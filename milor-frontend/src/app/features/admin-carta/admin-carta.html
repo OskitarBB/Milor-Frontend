@@ -66,17 +66,38 @@
     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
       <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">2. Platos de Fondo (Segundos)</span>
 
-      <!-- Formulario para agregar nuevo plato -->
-      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-        <input 
-          type="text" 
-          [disabled]="!milorService.turnoAbierto()"
-          [ngModel]="nuevoPlatoNombre()" 
-          (ngModelChange)="nuevoPlatoNombre.set($event)"
-          placeholder="Nombre del plato (ej. Arroz con Pollo)" 
-          class="w-full p-2 text-xs bg-white border border-slate-200 rounded-lg disabled:opacity-40 focus:outline-amber-500" />
+      <!-- Formulario con Buscador Predictivo de Platos -->
+      <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+        <div class="relative">
+          <label class="block text-[11px] font-bold text-slate-500 mb-1">Buscar plato histórico o escribir nuevo:</label>
+          <input 
+            type="text" 
+            [disabled]="!milorService.turnoAbierto()"
+            [ngModel]="nuevoPlatoNombre()" 
+            (ngModelChange)="onPlatoInput($event)"
+            placeholder="Ej. Arroz con Pollo, Seco..." 
+            class="w-full p-2.5 text-xs bg-white border border-slate-200 rounded-xl disabled:opacity-40 focus:outline-amber-500 shadow-sm" />
+          
+          <!-- Lista desplegable de sugerencias -->
+          @if (platosSugeridos().length > 0) {
+            <div class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-48 overflow-y-auto">
+              <div class="p-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b">
+                Platos anteriores coincidentes (Clic para reutilizar)
+              </div>
+              @for (sugerencia of platosSugeridos(); track sugerencia.id) {
+                <button 
+                  type="button"
+                  (mousedown)="$event.preventDefault(); seleccionarPlatoSugerido(sugerencia)"
+                  class="w-full text-left px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-900 transition flex justify-between items-center border-b border-slate-100 last:border-0">
+                  <span>🍽️ {{ sugerencia.nombre }}</span>
+                  <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">Reutilizar ID</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
         
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 pt-1">
           <div class="flex-1">
             <input 
               type="number" 
@@ -84,7 +105,7 @@
               [ngModel]="nuevoPlatoStock()" 
               (ngModelChange)="nuevoPlatoStock.set($event)"
               placeholder="Stock inicial" 
-              class="w-full p-2 text-xs bg-white border border-slate-200 rounded-lg disabled:opacity-40" />
+              class="w-full p-2.5 text-xs bg-white border border-slate-200 rounded-xl disabled:opacity-40 shadow-sm" />
           </div>
           
           <label class="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer select-none">
@@ -100,7 +121,7 @@
           <button 
             (click)="agregarPlato()"
             [disabled]="!milorService.turnoAbierto()"
-            class="px-3 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-xs rounded-lg transition active:scale-95">
+            class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow transition active:scale-95 whitespace-nowrap">
             + Agregar
           </button>
         </div>
@@ -109,48 +130,47 @@
       <!-- Lista de platos configurados -->
       <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
         @for (plato of cartaEditable().platos; track plato.id) {
-          <div class="flex items-center justify-between p-3 border rounded-xl transition-all"
-               [class]="plato.activo ? 'bg-slate-50 border-slate-200' : 'bg-slate-100/70 border-slate-200/60 opacity-60'">
-            <div class="flex-1 pr-2">
-              <span class="text-xs font-bold text-slate-800 block" [class.line-through]="!plato.activo">{{ plato.nombre }}</span>
-              <span class="text-[11px] text-slate-500">
-                {{ plato.esIlimitado ? 'Stock: Ilimitado' : 'Stock actual: ' + plato.stock }}
-              </span>
+          @if (plato.activo) {
+            <div class="flex items-center justify-between p-3 border rounded-xl transition-all bg-slate-50 border-slate-200">
+              <div class="flex-1 pr-2">
+                <span class="text-xs font-bold text-slate-800 block">{{ plato.nombre }}</span>
+                <span class="text-[11px] text-slate-500">
+                  {{ plato.esIlimitado ? 'Stock: Ilimitado' : 'Stock actual: ' + plato.stock }}
+                </span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button 
+                  type="button"
+                  (click)="abrirEditarPlato(plato)"
+                  [disabled]="!milorService.turnoAbierto()"
+                  title="Editar plato"
+                  class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition">
+                  ✏️
+                </button>
+
+                <button 
+                  type="button"
+                  (click)="togglePlatoActivo(plato.id)"
+                  [disabled]="!milorService.turnoAbierto()"
+                  class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 disabled:opacity-40 transition">
+                  Activo
+                </button>
+
+                <button 
+                  type="button"
+                  (click)="eliminarPlato(plato.id)"
+                  [disabled]="!milorService.turnoAbierto()"
+                  title="Eliminar plato"
+                  class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-40 rounded-full text-xs font-bold">
+                  ✕
+                </button>
+              </div>
             </div>
-
-            <div class="flex items-center gap-2">
-              <!-- Botón Editar -->
-              <button 
-                type="button"
-                (click)="abrirEditarPlato(plato)"
-                [disabled]="!milorService.turnoAbierto()"
-                title="Editar plato"
-                class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition">
-                ✏️
-              </button>
-
-              <!-- Botón Toggle Activo / Inactivo -->
-              <button 
-                type="button"
-                (click)="togglePlatoActivo(plato.id)"
-                [disabled]="!milorService.turnoAbierto()"
-                [class]="plato.activo 
-                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200' 
-                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300 border border-slate-300'"
-                class="px-2.5 py-1 rounded-lg text-xs font-bold disabled:opacity-40 transition">
-                {{ plato.activo ? 'Activo' : 'Inactivo' }}
-              </button>
-
-              <!-- Botón Eliminar Definitivo -->
-              <button 
-                type="button"
-                (click)="eliminarPlato(plato.id)"
-                [disabled]="!milorService.turnoAbierto()"
-                title="Eliminar plato"
-                class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-40 rounded-full text-xs font-bold">
-                ✕
-              </button>
-            </div>
+          }
+        } @empty {
+          <div class="text-center py-8 text-slate-400 text-xs">
+            No hay platos configurados para este turno. Usa el buscador superior para agregar o reutilizar platos.
           </div>
         }
       </div>
@@ -160,66 +180,88 @@
     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
       <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">3. Entradas del Día</span>
 
-      <!-- Formulario para agregar nueva entrada -->
-      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex gap-2">
-        <input 
-          type="text" 
-          [disabled]="!milorService.turnoAbierto()"
-          [ngModel]="nuevaEntradaNombre()" 
-          (ngModelChange)="nuevaEntradaNombre.set($event)"
-          placeholder="Nombre de la entrada (ej. Causa Rellena)" 
-          class="flex-1 p-2 text-xs bg-white border border-slate-200 rounded-lg disabled:opacity-40 focus:outline-amber-500" />
+      <!-- Formulario con Buscador Predictivo de Entradas -->
+      <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+        <div class="relative">
+          <label class="block text-[11px] font-bold text-slate-500 mb-1">Buscar entrada histórica o escribir nueva:</label>
+          <input 
+            type="text" 
+            [disabled]="!milorService.turnoAbierto()"
+            [ngModel]="nuevaEntradaNombre()" 
+            (ngModelChange)="onEntradaInput($event)"
+            placeholder="Ej. Causa Rellena, Papa a la Huancaina..." 
+            class="w-full p-2.5 text-xs bg-white border border-slate-200 rounded-xl disabled:opacity-40 focus:outline-amber-500 shadow-sm" />
 
-        <button 
-          (click)="agregarEntrada()"
-          [disabled]="!milorService.turnoAbierto()"
-          class="px-3 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-xs rounded-lg transition active:scale-95">
-          + Agregar
-        </button>
+          <!-- Lista desplegable de sugerencias de entradas -->
+          @if (entradasSugeridas().length > 0) {
+            <div class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-30 max-h-48 overflow-y-auto">
+              <div class="p-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b">
+                Entradas anteriores (Clic para reutilizar)
+              </div>
+              @for (sugEntrada of entradasSugeridas(); track sugEntrada.id) {
+                <button 
+                  type="button"
+                  (mousedown)="$event.preventDefault(); seleccionarEntradaSugerida(sugEntrada)"
+                  class="w-full text-left px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-900 transition flex justify-between items-center border-b border-slate-100 last:border-0">
+                  <span>🥗 {{ sugEntrada.nombre }}</span>
+                  <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">Reutilizar ID</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="flex justify-end pt-1">
+          <button 
+            (click)="agregarEntrada()"
+            [disabled]="!milorService.turnoAbierto()"
+            class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow transition active:scale-95 whitespace-nowrap">
+            + Agregar Entrada
+          </button>
+        </div>
       </div>
 
       <!-- Lista de entradas configuradas -->
       <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
         @for (entrada of cartaEditable().entradas; track entrada.id) {
-          <div class="flex items-center justify-between p-3 border rounded-xl transition-all"
-               [class]="entrada.activo ? 'bg-slate-50 border-slate-200' : 'bg-slate-100/70 border-slate-200/60 opacity-60'">
-            <span class="text-xs font-bold text-slate-800 flex-1 pr-2" [class.line-through]="!entrada.activo">
-              🥗 {{ entrada.nombre }}
-            </span>
+          @if (entrada.activo) {
+            <div class="flex items-center justify-between p-3 border rounded-xl transition-all bg-slate-50 border-slate-200">
+              <span class="text-xs font-bold text-slate-800 flex-1 pr-2">
+                🥗 {{ entrada.nombre }}
+              </span>
 
-            <div class="flex items-center gap-2">
-              <!-- Botón Editar -->
-              <button 
-                type="button"
-                (click)="abrirEditarEntrada(entrada)"
-                [disabled]="!milorService.turnoAbierto()"
-                title="Editar entrada"
-                class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition">
-                ✏️
-              </button>
+              <div class="flex items-center gap-2">
+                <button 
+                  type="button"
+                  (click)="abrirEditarEntrada(entrada)"
+                  [disabled]="!milorService.turnoAbierto()"
+                  title="Editar entrada"
+                  class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition">
+                  ✏️
+                </button>
 
-              <!-- Botón Toggle Activa / Inactiva -->
-              <button 
-                type="button"
-                (click)="toggleEntradaActiva(entrada.id)"
-                [disabled]="!milorService.turnoAbierto()"
-                [class]="entrada.activo 
-                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200' 
-                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300 border border-slate-300'"
-                class="px-2.5 py-1 rounded-lg text-xs font-bold disabled:opacity-40 transition">
-                {{ entrada.activo ? 'Activa' : 'Inactiva' }}
-              </button>
+                <button 
+                  type="button"
+                  (click)="toggleEntradaActiva(entrada.id)"
+                  [disabled]="!milorService.turnoAbierto()"
+                  class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 disabled:opacity-40 transition">
+                  Activa
+                </button>
 
-              <!-- Botón Eliminar Definitivo -->
-              <button 
-                type="button"
-                (click)="eliminarEntrada(entrada.id)"
-                [disabled]="!milorService.turnoAbierto()"
-                title="Eliminar entrada"
-                class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-40 rounded-full text-xs font-bold">
-                ✕
-              </button>
+                <button 
+                  type="button"
+                  (click)="eliminarEntrada(entrada.id)"
+                  [disabled]="!milorService.turnoAbierto()"
+                  title="Eliminar entrada"
+                  class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-40 rounded-full text-xs font-bold">
+                  ✕
+                </button>
+              </div>
             </div>
+          }
+        } @empty {
+          <div class="text-center py-8 text-slate-400 text-xs">
+            No hay entradas configuradas para este turno. Usa el buscador superior para agregar o reutilizar entradas.
           </div>
         }
       </div>
@@ -309,7 +351,7 @@
           </button>
           <button 
             type="button" 
-            (click)="guardarEntradaEditada()" 
+            (click)`="guardarEntradaEditada()" 
             class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition">
             Guardar Cambios
           </button>
