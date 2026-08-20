@@ -21,16 +21,19 @@ import { AuthService } from './core/services/auth.service';
               </a>
             }
 
-            <!-- Administrador o Soporte ven Carta, Dashboard e Historial -->
+            <!-- Administrador o Soporte ven las secciones administrativas + Configuración -->
             @if (rol() === 'ADMIN' || rol() === 'SOPORTE') {
-              <a routerLink="/admin/carta" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
-                ⚙️ Configurar Carta
-              </a>
               <a routerLink="/admin/dashboard" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
-                📊 Dashboard en Vivo
+                📊 Dashboard
+              </a>
+              <a routerLink="/admin/carta" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                ⚙️ Carta
               </a>
               <a routerLink="/admin/historial" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
-                📜 Historial de Ventas
+                📜 Historial
+              </a>
+              <a routerLink="/admin/usuarios" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                👥 Configuración
               </a>
             }
           </nav>

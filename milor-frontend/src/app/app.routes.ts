@@ -16,25 +16,31 @@ export const routes: Routes = [
     path: 'operador',
     loadComponent: () =>
       import('./features/operador/operador').then(m => m.Operador),
-    canActivate: [authGuard] // <--- Protegido
+    canActivate: [authGuard]
   },
   {
     path: 'admin/carta',
     loadComponent: () =>
       import('./features/admin-carta/admin-carta').then(m => m.AdminCarta),
-    canActivate: [authGuard] // <--- Protegido
+    canActivate: [authGuard]
   },
   {
     path: 'admin/dashboard',
     loadComponent: () =>
       import('./features/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent),
-    canActivate: [authGuard] // <--- Protegido
+    canActivate: [authGuard]
   },
   {
     path: 'admin/historial',
     loadComponent: () => 
       import('./features/historial-dashboard/historial-dashboard').then(m => m.HistorialDashboardComponent),
-    canActivate: [authGuard] // <--- Protegido
+    canActivate: [authGuard]
+  },
+  {
+    path: 'admin/usuarios',
+    loadComponent: () => 
+      import('./features/admin-usuarios/admin-usuarios').then(m => m.AdminUsuarios),
+    canActivate: [authGuard]
   },
   {
     path: '**',
