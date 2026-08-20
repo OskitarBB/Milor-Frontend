@@ -1,6 +1,8 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { MilorService } from '../../core/services/milor.service';
+import { WebSocketService } from '../../core/services/websocket.service';
+import { Subscription } from 'rxjs';
 
 interface PlatoResumen {
   id: string;
@@ -17,15 +19,45 @@ interface PlatoResumen {
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css']
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminDashboardComponent implements OnInit, OnDestroy {
   private readonly milorService = inject(MilorService);
+  private readonly webSocketService = inject(WebSocketService);
+  private ventaSub?: Subscription;
 
   turnoAbierto = signal<boolean>(false);
   cargandoTurno = signal<boolean>(false);
 
+  // Señal para controlar la notificación flotante en vivo de nuevas ventas
+  nuevaNotificacion = signal<string | null>(null);
+
   ngOnInit(): void {
     this.verificarEstadoTurno();
     this.cargarMetricasAlRecargar(); // <--- LLAMADA CLAVE PARA EVITAR QUE SE QUEDE EN CERO
+
+    // Conectar y escuchar las nuevas ventas en tiempo real por WebSockets
+    this.webSocketService.conectar(() => {
+      this.ventaSub = this.webSocketService.onVentaRegistrada().subscribe({
+        next: (data) => {
+          // Activamos la notificación flotante en vivo
+          this.nuevaNotificacion.set('¡Se ha registrado una nueva venta en el sistema!');
+          
+          // Ocultar la notificación automáticamente después de 4 segundos
+          setTimeout(() => {
+            this.nuevaNotificacion.set(null);
+          }, 4000);
+
+          // Actualizamos las métricas automáticamente al recibir la venta
+          this.cargarMetricasAlRecargar();
+        }
+      });
+    });
+  }
+
+  ngOnDestroy(): void {
+    // Limpiamos la suscripción del WebSocket al salir del componente
+    if (this.ventaSub) {
+      this.ventaSub.unsubscribe();
+    }
   }
 
   verificarEstadoTurno(): void {
