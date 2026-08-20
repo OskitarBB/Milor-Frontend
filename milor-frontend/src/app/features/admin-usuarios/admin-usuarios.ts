@@ -1,12 +1,12 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="max-w-5xl mx-auto p-4 space-y-6">
       
@@ -24,33 +24,34 @@ import { AuthService } from '../../core/services/auth.service';
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- Formulario para Crear Usuario -->
+        <!-- Formulario Reactivo para Crear Usuario -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <h2 class="text-sm font-black text-slate-800 uppercase tracking-wider">Nuevo Usuario</h2>
           
-          <form (ngSubmit)="crearUsuario()" class="space-y-3">
+          <form [formGroup]="usuarioForm" (ngSubmit)="crearUsuario()" class="space-y-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre de Usuario</label>
-              <input type="text" [(ngModel)]="nuevoUsername" name="username" required placeholder="Ej. mesero_juan"
+              <input type="text" formControlName="username" placeholder="Ej. mesero_juan"
                      class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-amber-500">
             </div>
 
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Contraseña</label>
-              <input type="password" [(ngModel)]="nuevoPassword" name="password" required placeholder="••••••••"
+              <input type="password" formControlName="password" placeholder="••••••••"
                      class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-amber-500">
             </div>
 
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Rol de Acceso</label>
-              <select [(ngModel)]="nuevoRol" name="rol" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-amber-500">
+              <select formControlName="rol" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-amber-500">
                 <option value="MESERO">Mesero (Solo Operador)</option>
                 <option value="ADMIN">Administrador (Gestión Completa)</option>
                 <option value="SOPORTE">Soporte (Acceso Total)</option>
               </select>
             </div>
 
-            <button type="submit" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition shadow-sm uppercase tracking-wider">
+            <button type="submit" [disabled]="usuarioForm.invalid" 
+                    class="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition shadow-sm uppercase tracking-wider">
               + Registrar Usuario
             </button>
           </form>
@@ -80,7 +81,6 @@ import { AuthService } from '../../core/services/auth.service';
                       </span>
                     </td>
                     <td class="py-3 text-right">
-                      <!-- Ocultar botón de eliminar si es admin o soporte -->
                       @if (u.username.toLowerCase() !== 'admin' && u.username.toLowerCase() !== 'soporte') {
                         <button (click)="eliminar(u.id)" class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg transition">
                           Eliminar
@@ -102,11 +102,15 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class AdminUsuarios implements OnInit {
   private readonly auth = inject(AuthService);
+  private readonly fb = inject(FormBuilder);
+
+  usuarioForm: FormGroup = this.fb.group({
+    username: ['', [Validators.required, Validators.minLength(3)]],
+    password: ['', [Validators.required, Validators.minLength(4)]],
+    rol: ['MESERO', Validators.required]
+  });
 
   listaUsuarios = signal<any[]>([]);
-  nuevoUsername = '';
-  nuevoPassword = '';
-  nuevoRol = 'MESERO';
   mensajeExito = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -121,17 +125,12 @@ export class AdminUsuarios implements OnInit {
   }
 
   crearUsuario(): void {
-    if (!this.nuevoUsername || !this.nuevoPassword) return;
+    if (this.usuarioForm.invalid) return;
 
-    this.auth.crearUsuario({
-      username: this.nuevoUsername,
-      password: this.nuevoPassword,
-      rol: this.nuevoRol
-    }).subscribe({
+    this.auth.crearUsuario(this.usuarioForm.value).subscribe({
       next: () => {
-        this.mensajeExito.set(`¡Usuario "${this.nuevoUsername}" creado exitosamente!`);
-        this.nuevoUsername = '';
-        this.nuevoPassword = '';
+        this.mensajeExito.set(`¡Usuario creado exitosamente!`);
+        this.usuarioForm.reset({ rol: 'MESERO' });
         this.cargarUsuarios();
         setTimeout(() => this.mensajeExito.set(null), 3000);
       },
