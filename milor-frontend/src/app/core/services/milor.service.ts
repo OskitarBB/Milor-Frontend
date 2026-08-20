@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { WebSocketService } from './websocket.service';
 import { CartaDiariaDTO, DashboardMetricasDTO } from '../models/milor.models';
-import { tap } from 'rxjs'; // <-- IMPORTACIÓN NECESARIA AÑADIDA AQUÍ
+import { tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -46,6 +46,13 @@ export class MilorService {
       });
       this.ws.suscribir<DashboardMetricasDTO>('/topic/metricas', (data: DashboardMetricasDTO) => {
         this.metricas.set(data);
+      });
+      
+      // 🚀 Suscripción en tiempo real para el estado de la caja y turnos
+      this.ws.suscribir<any>('/topic/turno', (turno: any) => {
+        const estado = typeof turno === 'string' ? turno : (turno?.estado || turno?.status || '');
+        const esAbierto = String(estado).toUpperCase() === 'ABIERTO';
+        this.turnoAbierto.set(esAbierto);
       });
     });
   }
