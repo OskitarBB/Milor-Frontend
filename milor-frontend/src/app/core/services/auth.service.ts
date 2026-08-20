@@ -10,7 +10,7 @@ export type RolUsuario = 'MESERO' | 'ADMIN' | 'SOPORTE' | null;
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly webSocketService = inject(WebSocketService); // <--- Inyectamos el servicio WebSocket
+  private readonly webSocketService = inject(WebSocketService);
   private readonly apiUrl = 'http://localhost:8080/api/usuarios';
 
   readonly usuarioActivo = signal<any>(this.obtenerUsuarioInicial());
@@ -28,6 +28,9 @@ export class AuthService {
         localStorage.setItem('milor_rol', user.rol);
         this.usuarioActivo.set(user);
         this.rolActual.set(user.rol);
+        
+        // 🚀 Activamos el canal de WebSockets de inmediato tras un login exitoso
+        this.webSocketService.conectar();
       })
     );
   }

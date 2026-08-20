@@ -1,88 +1,122 @@
 import { Injectable } from '@angular/core';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Subject, Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WebSocketService {
-  private client: Client;
-  private socketUrl = 'http://localhost:8080/ws';
-  
-  // Subject para emitir las alertas de nuevas ventas en tiempo real
-  private ventaSubject = new Subject<any>();
-  private isConnected = false;
+  private stompClient: Client | null = null;
+  private conectado = false;
+  private ventaRegistradaSubject = new Subject<any>();
 
   constructor() {
-    this.client = new Client({
-      webSocketFactory: () => new SockJS(this.socketUrl),
-      reconnectDelay: 3000,
-      debug: (msg: string) => {
-        if (!msg.includes('PING') && !msg.includes('PONG')) {
-          console.log('[STOMP]:', msg);
-        }
-      }
+    this.inicializarCliente();
+    
+    // 🚀 Conexión automática al iniciar la app si ya existe una sesión activa
+    if (localStorage.getItem('milor_token')) {
+      this.conectar();
+    }
+  }
+
+  private inicializarCliente(): void {
+    const token = localStorage.getItem('milor_token');
+
+    this.stompClient = new Client({
+      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      connectHeaders: {
+        Authorization: token ? `Bearer ${token}` : ''
+      },
+      debug: () => {},
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000
     });
-  }
 
-  conectar(onConnected?: () => void): void {
-    // Si ya está conectado, ejecutamos el callback de inmediato sin recrear el socket
-    if (this.isConnected && this.client.connected) {
-      if (onConnected) onConnected();
-      return;
-    }
+    this.stompClient.onConnect = () => {
+      this.conectado = true;
+      console.log('Conectado a STOMP WebSockets en tiempo real');
 
-    this.client.onConnect = (frame) => {
-      this.isConnected = true;
-      console.log('✅ Conectado a STOMP WebSockets');
-      
-      // Nos suscribimos al canal de métricas/ventas
-      this.client.subscribe('/topic/metricas', (mensaje: IMessage) => {
-        const data = JSON.parse(mensaje.body);
-        this.ventaSubject.next(data);
+      // Suscripción directa al canal exclusivo de ventas del backend
+      this.stompClient?.subscribe('/topic/ventas', (message: IMessage) => {
+        try {
+          const data = JSON.parse(message.body);
+          console.log('¡Venta registrada recibida en tiempo real!', data);
+          this.ventaRegistradaSubject.next(data);
+        } catch (e) {
+          this.ventaRegistradaSubject.next(message.body);
+        }
       });
-
-      if (onConnected) onConnected();
     };
 
-    this.client.onStompError = (frame) => {
-      this.isConnected = false;
-      console.error('❌ Error STOMP:', frame.headers['message'], frame.body);
+    this.stompClient.onStompError = (frame) => {
+      console.error('Error en STOMP broker:', frame.headers['message'], frame.body);
+      this.conectado = false;
     };
 
-    this.client.onWebSocketClose = () => {
-      this.isConnected = false;
+    this.stompClient.onDisconnect = () => {
+      this.conectado = false;
+      console.log('Desconectado de WebSockets');
     };
+  }
 
-    if (!this.client.active) {
-      this.client.activate();
+  conectar(onConnectCallback?: () => void): void {
+    if (onConnectCallback && this.stompClient) {
+      const prevOnConnect = this.stompClient.onConnect;
+      this.stompClient.onConnect = (frame) => {
+        if (prevOnConnect) prevOnConnect(frame);
+        onConnectCallback();
+      };
+    }
+
+    if (this.stompClient && !this.stompClient.active) {
+      const token = localStorage.getItem('milor_token');
+      if (token) {
+        this.stompClient.connectHeaders = { Authorization: `Bearer ${token}` };
+      }
+      this.stompClient.activate();
+    } else if (this.conectado && onConnectCallback) {
+      onConnectCallback();
     }
   }
 
-  suscribir<T>(topic: string, callback: (data: T) => void): void {
-    if (this.client.connected) {
-      this.client.subscribe(topic, (mensaje: IMessage) => {
-        callback(JSON.parse(mensaje.body) as T);
+  desconectar(): void {
+    if (this.stompClient && this.stompClient.active) {
+      this.stompClient.deactivate();
+      this.conectado = false;
+    }
+  }
+
+  suscribir<T>(destination: string, callback: (data: T) => void): void {
+    if (this.stompClient && this.conectado) {
+      this.stompClient.subscribe(destination, (message: IMessage) => {
+        try {
+          const data = JSON.parse(message.body);
+          callback(data);
+        } catch (e) {
+          callback(message.body as unknown as T);
+        }
       });
     } else {
-      this.conectar(() => {
-        this.client.subscribe(topic, (mensaje: IMessage) => {
-          callback(JSON.parse(mensaje.body) as T);
-        });
-      });
+      this.conectar();
+      const checkConnection = setInterval(() => {
+        if (this.stompClient && this.conectado) {
+          clearInterval(checkConnection);
+          this.stompClient.subscribe(destination, (message: IMessage) => {
+            try {
+              const data = JSON.parse(message.body);
+              callback(data);
+            } catch (e) {
+              callback(message.body as unknown as T);
+            }
+          });
+        }
+      }, 400);
     }
   }
 
   onVentaRegistrada(): Observable<any> {
-    return this.ventaSubject.asObservable();
-  }
-
-  desconectar(): void {
-    this.isConnected = false;
-    if (this.client.active) {
-      this.client.deactivate();
-      console.log('🔌 Desconectado de STOMP WebSockets por cierre de sesión');
-    }
+    return this.ventaRegistradaSubject.asObservable();
   }
 }
