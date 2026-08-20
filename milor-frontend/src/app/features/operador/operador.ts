@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router'; // <-- AÑADIDO PARA ROUTERLINK
+import { RouterModule } from '@angular/router';
 import { MilorService } from '../../core/services/milor.service';
 import { ModalidadConsumo, Plato, Entrada, RegistroVentaRequest } from '../../core/models/milor.models';
 
@@ -13,7 +13,7 @@ interface ItemPedidoVista {
 @Component({
   selector: 'app-operador',
   standalone: true,
-  imports: [CommonModule, RouterModule], // <-- AÑADIDO A IMPORTS
+  imports: [CommonModule, RouterModule],
   templateUrl: './operador.html',
   styleUrl: './operador.css'
 })
@@ -34,7 +34,8 @@ export class Operador {
   readonly mensajeError = signal<string | null>(null);
   readonly mensajeExito = signal<string | null>(null);
 
-  readonly platosDisponibles = computed(() => this.carta().platos.filter(p => p.activo !== false));
+  // 🚀 Se eliminó el filtro para permitir que se listen todos los platos y la vista refleje su estado inactivo
+  readonly platosDisponibles = computed(() => this.carta().platos);
   readonly entradasDisponibles = computed(() => this.carta().entradas.filter(e => e.activo !== false));
 
   readonly totalPedido = computed(() => {
@@ -47,7 +48,8 @@ export class Operador {
   }
 
   seleccionarPlato(plato: Plato): void {
-    if (!this.milorService.turnoAbierto()) return;
+    // Bloquea la selección si el turno está cerrado o si el plato está inactivo
+    if (!this.milorService.turnoAbierto() || plato.activo === false) return;
     this.platoSeleccionado.set(plato);
     this.mensajeError.set(null);
   }

@@ -2,14 +2,14 @@
 
   <!-- Alerta y Bloqueo Visual si el Turno está Cerrado -->
   @if (!milorService.turnoAbierto()) {
-<div class="flex flex-col items-center justify-center min-h-[55vh] text-center p-8 bg-white rounded-3xl border border-slate-200 shadow-sm">
-  <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-4 font-black shadow-inner">⚠️</div>
-  <h2 class="text-xl font-black text-slate-800 uppercase">Turno Cerrado / Caja Inactiva</h2>
-  <p class="text-xs text-slate-500 max-w-md mt-1 mb-6">El turno actual se encuentra cerrado. Para poder realizar pedidos y registrar ventas, el administrador debe abrir un turno desde el Dashboard en Vivo.</p>
-  <a routerLink="/admin/dashboard" class="px-5 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors shadow-md">
-    Ir al Dashboard a Abrir Turno
-  </a>
-</div>
+    <div class="flex flex-col items-center justify-center min-h-[55vh] text-center p-8 bg-white rounded-3xl border border-slate-200 shadow-sm">
+      <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-4 font-black shadow-inner">⚠️</div>
+      <h2 class="text-xl font-black text-slate-800 uppercase">Turno Cerrado / Caja Inactiva</h2>
+      <p class="text-xs text-slate-500 max-w-md mt-1 mb-6">El turno actual se encuentra cerrado. Para poder realizar pedidos y registrar ventas, el administrador debe abrir un turno desde el Dashboard en Vivo.</p>
+      <a routerLink="/admin/dashboard" class="px-5 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors shadow-md">
+        Ir al Dashboard a Abrir Turno
+      </a>
+    </div>
   } @else {
     <!-- Panel Operativo Visible Solo con Turno Abierto -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -43,16 +43,22 @@
             @for (plato of platosDisponibles(); track plato.id) {
               <button 
                 (click)="seleccionarPlato(plato)"
-                [disabled]="(!plato.esIlimitado && plato.stock <= 0) || !milorService.turnoAbierto()"
+                [disabled]="plato.activo === false || (!plato.esIlimitado && plato.stock <= 0) || !milorService.turnoAbierto()"
                 [class]="platoSeleccionado()?.id === plato.id 
                   ? 'ring-4 ring-amber-500 border-amber-500 bg-amber-50' 
-                  : ((!plato.esIlimitado && plato.stock <= 0) || !milorService.turnoAbierto() ? 'opacity-40 bg-slate-100 cursor-not-allowed border-slate-200' : 'bg-white hover:border-amber-500 border-slate-200')"
+                  : ((plato.activo === false || (!plato.esIlimitado && plato.stock <= 0)) || !milorService.turnoAbierto() ? 'opacity-40 bg-slate-100 cursor-not-allowed border-slate-200' : 'bg-white hover:border-amber-500 border-slate-200')"
                 class="p-4 rounded-xl border-2 text-left flex flex-col justify-between h-24 transition active:scale-95 shadow-sm">
-                <span class="font-bold text-sm leading-tight text-slate-800 line-clamp-2">{{ plato.nombre }}</span>
+                
+                <!-- Nombre del plato tachado si está inactivo -->
+                <span class="font-bold text-sm leading-tight text-slate-800 line-clamp-2" [class.line-through]="plato.activo === false">
+                  {{ plato.nombre }}
+                </span>
+
                 <div class="flex items-center justify-between mt-1">
+                  <!-- Etiqueta dinámica: Muestra Inactivo, Ilimitado o Stock -->
                   <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                    [class]="plato.esIlimitado ? 'bg-blue-100 text-blue-700' : (plato.stock <= 3 ? 'bg-red-100 text-red-700 font-bold' : 'bg-emerald-100 text-emerald-700')">
-                    {{ plato.esIlimitado ? '∞ Ilimitado' : 'Stock: ' + plato.stock }}
+                    [class]="plato.activo === false ? 'bg-slate-200 text-slate-600 font-bold' : (plato.esIlimitado ? 'bg-blue-100 text-blue-700' : (plato.stock <= 3 ? 'bg-red-100 text-red-700 font-bold' : 'bg-emerald-100 text-emerald-700'))">
+                    {{ plato.activo === false ? 'Inactivo' : (plato.esIlimitado ? '∞ Ilimitado' : 'Stock: ' + plato.stock) }}
                   </span>
                 </div>
               </button>

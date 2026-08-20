@@ -1,14 +1,14 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router'; // <-- AÑADIDO PARA ROUTERLINK
+import { RouterModule } from '@angular/router';
 import { MilorService } from '../../core/services/milor.service';
 import { CartaDiariaDTO, Plato, Entrada } from '../../core/models/milor.models';
 
 @Component({
   selector: 'app-admin-carta',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], // <-- AÑADIDO A IMPORTS
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './admin-carta.html',
   styleUrl: './admin-carta.css'
 })
@@ -104,6 +104,12 @@ export class AdminCarta {
         activo: nuevoEstado
       }).subscribe({
         next: () => {
+          // 🚀 Actualización visual instantánea en el signal local
+          this.cartaEditable.update(current => ({
+            ...current,
+            platos: current.platos.map(p => p.id === id ? { ...p, activo: nuevoEstado } : p)
+          }));
+
           const estadoTexto = nuevoEstado ? 'Activo (Visible en Operador)' : 'Inactivo (Pausado)';
           this.mostrarAviso(`Plato "${plato.nombre}" cambiado a: ${estadoTexto}`);
         },
@@ -197,6 +203,12 @@ export class AdminCarta {
         activo: nuevoEstado
       }).subscribe({
         next: () => {
+          // 🚀 Actualización visual instantánea en el signal local de entradas
+          this.cartaEditable.update(current => ({
+            ...current,
+            entradas: current.entradas.map(e => e.id === id ? { ...e, activo: nuevoEstado } : e)
+          }));
+
           const estadoTexto = nuevoEstado ? 'Activa (Visible en Operador)' : 'Inactiva (Pausada)';
           this.mostrarAviso(`Entrada "${entrada.nombre}" cambiada a: ${estadoTexto}`);
         },

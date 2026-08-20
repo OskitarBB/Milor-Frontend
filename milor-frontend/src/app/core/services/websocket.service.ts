@@ -12,6 +12,7 @@ export class WebSocketService {
   
   // Subject para emitir las alertas de nuevas ventas en tiempo real
   private ventaSubject = new Subject<any>();
+  private isConnected = false;
 
   constructor() {
     this.client = new Client({
@@ -26,10 +27,17 @@ export class WebSocketService {
   }
 
   conectar(onConnected?: () => void): void {
+    // Si ya está conectado, ejecutamos el callback de inmediato sin recrear el socket
+    if (this.isConnected && this.client.connected) {
+      if (onConnected) onConnected();
+      return;
+    }
+
     this.client.onConnect = (frame) => {
+      this.isConnected = true;
       console.log('✅ Conectado a STOMP WebSockets');
       
-      // Nos suscribimos automáticamente al canal de métricas/ventas del backend
+      // Nos suscribimos al canal de métricas/ventas
       this.client.subscribe('/topic/metricas', (mensaje: IMessage) => {
         const data = JSON.parse(mensaje.body);
         this.ventaSubject.next(data);
@@ -39,10 +47,17 @@ export class WebSocketService {
     };
 
     this.client.onStompError = (frame) => {
+      this.isConnected = false;
       console.error('❌ Error STOMP:', frame.headers['message'], frame.body);
     };
 
-    this.client.activate();
+    this.client.onWebSocketClose = () => {
+      this.isConnected = false;
+    };
+
+    if (!this.client.active) {
+      this.client.activate();
+    }
   }
 
   suscribir<T>(topic: string, callback: (data: T) => void): void {
@@ -51,24 +66,23 @@ export class WebSocketService {
         callback(JSON.parse(mensaje.body) as T);
       });
     } else {
-      const prevOnConnect = this.client.onConnect;
-      this.client.onConnect = (frame) => {
-        if (prevOnConnect) prevOnConnect(frame);
+      this.conectar(() => {
         this.client.subscribe(topic, (mensaje: IMessage) => {
           callback(JSON.parse(mensaje.body) as T);
         });
-      };
+      });
     }
   }
 
-  // Método público para que el Dashboard escuche las nuevas ventas
   onVentaRegistrada(): Observable<any> {
     return this.ventaSubject.asObservable();
   }
 
   desconectar(): void {
+    this.isConnected = false;
     if (this.client.active) {
       this.client.deactivate();
+      console.log('🔌 Desconectado de STOMP WebSockets por cierre de sesión');
     }
   }
 }

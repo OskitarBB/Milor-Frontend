@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs';
+import { WebSocketService } from './websocket.service';
 
 export type RolUsuario = 'MESERO' | 'ADMIN' | 'SOPORTE' | null;
 
@@ -9,6 +10,7 @@ export type RolUsuario = 'MESERO' | 'ADMIN' | 'SOPORTE' | null;
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly webSocketService = inject(WebSocketService); // <--- Inyectamos el servicio WebSocket
   private readonly apiUrl = 'http://localhost:8080/api/usuarios';
 
   readonly usuarioActivo = signal<any>(this.obtenerUsuarioInicial());
@@ -31,6 +33,10 @@ export class AuthService {
   }
 
   cerrarSesion(): void {
+    // 1. Apagamos y cerramos el WebSocket limpiamente al terminar la sesión
+    this.webSocketService.desconectar();
+
+    // 2. Limpiamos el almacenamiento y los estados locales
     localStorage.removeItem('milor_user');
     localStorage.removeItem('milor_rol');
     this.usuarioActivo.set(null);
