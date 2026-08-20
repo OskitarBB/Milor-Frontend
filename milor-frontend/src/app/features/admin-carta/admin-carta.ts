@@ -24,10 +24,10 @@ export class AdminCarta {
   nuevoPlatoNombre = signal('');
   nuevoPlatoStock = signal(20);
   nuevoPlatoIlimitado = signal(false);
-  mostrarSugerenciasPlatos = signal(false); // 🚀 Control de visibilidad del dropdown
+  mostrarSugerenciasPlatos = signal(false);
 
   nuevaEntradaNombre = signal('');
-  mostrarSugerenciasEntradas = signal(false); // 🚀 Control de visibilidad del dropdown
+  mostrarSugerenciasEntradas = signal(false);
 
   guardadoExitoso = signal(false);
   mensajeAviso = signal<string | null>(null);
@@ -72,26 +72,26 @@ export class AdminCarta {
     this.mostrarSugerenciasEntradas.set(true);
   }
 
-  // 🔍 Buscador predictivo tolerante a tildes y mayúsculas para platos
+  // 🚀 Muestra todos los platos inactivos si está vacío, o filtra si hay texto
   readonly platosSugeridos = computed(() => {
     if (!this.mostrarSugerenciasPlatos()) return [];
     const query = this.normalizarTexto(this.nuevoPlatoNombre());
-    if (!query || query.length < 2) return [];
+    const inactivos = this.cartaEditable().platos.filter(p => !p.activo);
     
-    return this.cartaEditable().platos.filter(p => 
-      !p.activo && this.normalizarTexto(p.nombre).includes(query)
-    );
+    if (!query) return inactivos;
+    
+    return inactivos.filter(p => this.normalizarTexto(p.nombre).includes(query));
   });
 
-  // 🔍 Buscador predictivo tolerante a tildes y mayúsculas para entradas
+  // 🚀 Muestra todas las entradas inactivas si está vacío, o filtra si hay texto
   readonly entradasSugeridas = computed(() => {
     if (!this.mostrarSugerenciasEntradas()) return [];
     const query = this.normalizarTexto(this.nuevaEntradaNombre());
-    if (!query || query.length < 2) return [];
+    const inactivas = this.cartaEditable().entradas.filter(e => !e.activo);
     
-    return this.cartaEditable().entradas.filter(e => 
-      !e.activo && this.normalizarTexto(e.nombre).includes(query)
-    );
+    if (!query) return inactivas;
+    
+    return inactivas.filter(e => this.normalizarTexto(e.nombre).includes(query));
   });
 
   private mostrarAviso(texto: string): void {
@@ -140,7 +140,7 @@ export class AdminCarta {
       this.nuevoPlatoStock.set(plato.stock);
     }
     this.nuevoPlatoIlimitado.set(!!plato.esIlimitado);
-    this.mostrarSugerenciasPlatos.set(false); // Oculta el desplegable y libera el botón de agregar
+    this.mostrarSugerenciasPlatos.set(false);
   }
 
   agregarEntrada(): void {
@@ -174,7 +174,7 @@ export class AdminCarta {
 
   seleccionarEntradaSugerida(entrada: Entrada): void {
     this.nuevaEntradaNombre.set(entrada.nombre);
-    this.mostrarSugerenciasEntradas.set(false); // Oculta el desplegable y libera el botón de agregar
+    this.mostrarSugerenciasEntradas.set(false);
   }
 
   eliminarPlato(id?: number): void {
