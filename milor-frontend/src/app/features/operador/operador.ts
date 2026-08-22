@@ -49,14 +49,27 @@ export class Operador {
 
   seleccionarPlato(plato: Plato): void {
     if (!this.milorService.turnoAbierto() || plato.activo === false) return;
-    this.platoSeleccionado.set(plato);
+    
+    // Si el plato ya está seleccionado, se deselecciona (vuelve a null)
+    if (this.platoSeleccionado()?.id === plato.id) {
+      this.platoSeleccionado.set(null);
+    } else {
+      this.platoSeleccionado.set(plato);
+    }
+    
     this.mensajeError.set(null);
   }
 
   seleccionarEntrada(entrada: Entrada | 'SIN_ENTRADA'): void {
     if (!this.milorService.turnoAbierto()) return;
     if (entrada !== 'SIN_ENTRADA' && entrada.activo === false) return;
-    this.entradaSeleccionada.set(entrada);
+    
+    // Si la entrada seleccionada es la misma que se vuelve a presionar, regresa a 'SIN_ENTRADA'
+    if (this.entradaSeleccionada() === entrada) {
+      this.entradaSeleccionada.set('SIN_ENTRADA');
+    } else {
+      this.entradaSeleccionada.set(entrada);
+    }
   }
 
   agregarItem(): void {

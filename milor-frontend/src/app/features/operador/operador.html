@@ -1,3 +1,4 @@
+<!-- operador.html -->
 <div class="max-w-7xl mx-auto p-4 space-y-6">
 
   <!-- Alerta y Bloqueo Visual si el Turno está Cerrado -->
@@ -8,8 +9,8 @@
       <p class="text-xs text-slate-500 max-w-md mt-1 mb-6">El turno actual se encuentra cerrado. Para poder realizar pedidos y registrar ventas, el administrador debe abrir un nuevo Turno.</p>
     </div>
   } @else {
-    <!-- Panel Operativo Visible Solo con Turno Abierto -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Panel Operativo Visible Solo con Turno Abierto (items-start evita que las columnas se estiren por igual) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       
       <!-- Columna Izquierda: Selección Táctil de Menú (2 Columnas en Desktop) -->
       <div class="lg:col-span-2 space-y-6">
@@ -112,8 +113,8 @@
 
       </div>
 
-      <!-- Columna Derecha: Resumen de Orden y Registro Rápido -->
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between h-[600px]">
+      <!-- Columna Derecha: Resumen de Orden y Registro Rápido (Se eliminó h-[600px] para que crezca dinámicamente) -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
         
         <div>
           <div class="flex items-center justify-between border-b pb-3 mb-3">
@@ -135,8 +136,8 @@
             </div>
           }
 
-          <!-- Lista de Ítems en el Pedido -->
-          <div class="space-y-2 overflow-y-auto max-h-80 pr-1">
+          <!-- Lista de Ítems en el Pedido (crece de forma natural hasta max-h-72 y activa scroll interno si hay muchos) -->
+          <div class="space-y-2 overflow-y-auto max-h-72 pr-1">
             @for (item of pedidoActual(); track $index) {
               <div class="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
                 <div class="flex-1 pr-2">
@@ -155,7 +156,7 @@
                 </div>
               </div>
             } @empty {
-              <div class="text-center py-12 text-slate-400 text-xs">
+              <div class="text-center py-8 text-slate-400 text-xs">
                 No hay platos agregados a la orden.
               </div>
             }
@@ -163,7 +164,7 @@
         </div>
 
         <!-- Pie del Panel: Total y Acción de Envío -->
-        <div class="border-t pt-4 space-y-3">
+        <div class="border-t pt-4 mt-4 space-y-3">
           <div class="flex justify-between items-baseline">
             <span class="text-sm font-semibold text-slate-500">Total a Cobrar:</span>
             <span class="text-2xl font-black text-slate-900">S/ {{ totalPedido().toFixed(2) }}</span>
