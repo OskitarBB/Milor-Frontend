@@ -11,7 +11,7 @@ export class MilorService {
   private readonly http = inject(HttpClient);
   private readonly ws = inject(WebSocketService);
   
-  private readonly apiUrl = 'http://localhost:8080/api';
+  private readonly apiUrl = 'https://milor-backend.onrender.com/api';
 
   carta = signal<CartaDiariaDTO | null>(null);
   metricas = signal<DashboardMetricasDTO | null>(null);
@@ -48,7 +48,6 @@ export class MilorService {
         this.metricas.set(data);
       });
       
-      // 🚀 Suscripción en tiempo real para el estado de la caja y turnos
       this.ws.suscribir<any>('/topic/turno', (turno: any) => {
         const estado = typeof turno === 'string' ? turno : (turno?.estado || turno?.status || '');
         const esAbierto = String(estado).toUpperCase() === 'ABIERTO';

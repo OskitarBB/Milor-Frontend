@@ -11,7 +11,7 @@ export type RolUsuario = 'MESERO' | 'ADMIN' | 'SOPORTE' | null;
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly webSocketService = inject(WebSocketService);
-  private readonly apiUrl = 'http://localhost:8080/api/usuarios';
+  private readonly apiUrl = 'https://milor-backend.onrender.com/api/usuarios';
 
   readonly usuarioActivo = signal<any>(this.obtenerUsuarioInicial());
   readonly rolActual = signal<RolUsuario>(this.usuarioActivo()?.rol || null);
@@ -29,17 +29,14 @@ export class AuthService {
         this.usuarioActivo.set(user);
         this.rolActual.set(user.rol);
         
-        // 🚀 Activamos el canal de WebSockets de inmediato tras un login exitoso
         this.webSocketService.conectar();
       })
     );
   }
 
   cerrarSesion(): void {
-    // 1. Apagamos y cerramos el WebSocket limpiamente al terminar la sesión
     this.webSocketService.desconectar();
 
-    // 2. Limpiamos el almacenamiento y los estados locales
     localStorage.removeItem('milor_user');
     localStorage.removeItem('milor_rol');
     this.usuarioActivo.set(null);
@@ -50,7 +47,6 @@ export class AuthService {
     return this.rolActual() !== null;
   }
 
-  // Métodos para que el Admin o Soporte gestionen cuentas
   listarUsuarios() {
     return this.http.get<any[]>(this.apiUrl);
   }
