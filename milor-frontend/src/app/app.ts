@@ -11,7 +11,7 @@ import { Subscription, filter } from 'rxjs';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <!-- Estilos de animación personalizados para el menú desplegable -->
+    <!-- Estilos CSS para evitar el conflicto del hover en el Navbar -->
     <style>
       @keyframes slideUpFade {
         0% {
@@ -25,6 +25,32 @@ import { Subscription, filter } from 'rxjs';
       }
       .animate-slide-up {
         animation: slideUpFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      /* Estilo base de los enlaces del navbar */
+      .nav-link {
+        padding: 0.5rem 1rem;
+        border-radius: 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #475569; /* text-slate-600 */
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      /* El hover SOLO actúa si el enlace NO está activo */
+      .nav-link:hover:not(.activo) {
+        background-color: #f1f5f9; /* bg-slate-100 */
+        color: #0f172a; /* text-slate-900 */
+      }
+
+      /* Estilo absoluto cuando la sección está activa (anula cualquier hover) */
+      .nav-link.activo {
+        background-color: #020617 !important; /* slate-950 */
+        color: #ffffff !important;           /* Texto blanco nítido */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       }
     </style>
 
@@ -49,22 +75,37 @@ import { Subscription, filter } from 'rxjs';
             <!-- Navbar de Escritorio -->
             <nav class="hidden sm:flex items-center gap-2">
               @if (rol() === 'MESERO' || rol() === 'SOPORTE') {
-                <a routerLink="/operador" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                <a routerLink="/operador" 
+                   routerLinkActive="activo" 
+                   [routerLinkActiveOptions]="{ exact: true }"
+                   class="nav-link">
                   ⚡ Operador (Ventas)
                 </a>
               }
 
               @if (rol() === 'ADMIN' || rol() === 'SOPORTE') {
-                <a routerLink="/admin/dashboard" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                <a routerLink="/admin/dashboard" 
+                   routerLinkActive="activo" 
+                   [routerLinkActiveOptions]="{ exact: true }"
+                   class="nav-link">
                   📊 Dashboard
                 </a>
-                <a routerLink="/admin/carta" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                <a routerLink="/admin/carta" 
+                   routerLinkActive="activo" 
+                   [routerLinkActiveOptions]="{ exact: true }"
+                   class="nav-link">
                   ⚙️ Carta
                 </a>
-                <a routerLink="/admin/historial" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                <a routerLink="/admin/historial" 
+                   routerLinkActive="activo" 
+                   [routerLinkActiveOptions]="{ exact: true }"
+                   class="nav-link">
                   📜 Historial
                 </a>
-                <a routerLink="/admin/usuarios" routerLinkActive="bg-slate-900 text-white" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                <a routerLink="/admin/usuarios" 
+                   routerLinkActive="activo" 
+                   [routerLinkActiveOptions]="{ exact: true }"
+                   class="nav-link">
                   👥 Configuración
                 </a>
               }
@@ -89,28 +130,26 @@ import { Subscription, filter } from 'rxjs';
 
         <!-- Menú Desplegable Móvil Flotante con Backdrop de Cierre Automático -->
         @if (menuAbierto()) {
-          <!-- Capa invisible de fondo que detecta clics fuera para cerrar el menú -->
           <div class="fixed inset-0 z-40 bg-transparent sm:hidden" (click)="cerrarMenu()"></div>
 
-          <!-- Tarjeta del Menú -->
           <div class="sm:hidden absolute top-full right-4 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-1 z-50 animate-slide-up">
             @if (rol() === 'MESERO' || rol() === 'SOPORTE') {
-              <a routerLink="/operador" (click)="cerrarMenu()" routerLinkActive="bg-slate-900 text-white" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition flex items-center gap-2">
+              <a routerLink="/operador" (click)="cerrarMenu()" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                 ⚡ Operador (Ventas)
               </a>
             }
 
             @if (rol() === 'ADMIN' || rol() === 'SOPORTE') {
-              <a routerLink="/admin/dashboard" (click)="cerrarMenu()" routerLinkActive="bg-slate-900 text-white" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition flex items-center gap-2">
+              <a routerLink="/admin/dashboard" (click)="cerrarMenu()" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                 📊 Dashboard
               </a>
-              <a routerLink="/admin/carta" (click)="cerrarMenu()" routerLinkActive="bg-slate-900 text-white" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition flex items-center gap-2">
+              <a routerLink="/admin/carta" (click)="cerrarMenu()" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                 ⚙️ Carta
               </a>
-              <a routerLink="/admin/historial" (click)="cerrarMenu()" routerLinkActive="bg-slate-900 text-white" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition flex items-center gap-2">
+              <a routerLink="/admin/historial" (click)="cerrarMenu()" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                 📜 Historial
               </a>
-              <a routerLink="/admin/usuarios" (click)="cerrarMenu()" routerLinkActive="bg-slate-900 text-white" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition flex items-center gap-2">
+              <a routerLink="/admin/usuarios" (click)="cerrarMenu()" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
                 👥 Configuración
               </a>
             }
@@ -141,7 +180,6 @@ export class App implements OnDestroy {
   readonly currentUrl = signal(this.router.url);
   readonly menuAbierto = signal(false);
 
-  // Control estricto del Navbar
   readonly mostrarNavbar = computed(() => {
     const url = this.currentUrl();
     const tokenValido = this.auth.estaAutenticado();
@@ -149,7 +187,6 @@ export class App implements OnDestroy {
     return tokenValido && !enLogin;
   });
 
-  // La alerta solo aparece si hay evento, sesión, NO es login y EXCLUYE la ruta '/operador'
   readonly mostrarNotificacionAlerta = computed(() => {
     const url = this.currentUrl();
     const mensaje = this.nuevaNotificacion();
@@ -167,7 +204,6 @@ export class App implements OnDestroy {
       this.currentUrl.set(event.urlAfterRedirects || event.url);
     });
 
-    // Suscripción estricta al canal WebSocket '/topic/ventas' para cuando se registre una venta
     this.wsSub = this.webSocketService.onVentaRegistrada().subscribe({
       next: () => {
         this.nuevaNotificacion.set('¡Se ha registrado una nueva venta en el sistema!');
