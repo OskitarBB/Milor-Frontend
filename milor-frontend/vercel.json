@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "dist/milor-pos",
   "rewrites": [
     {
       "source": "/(.*)",
