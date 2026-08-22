@@ -1,3 +1,4 @@
+<!-- admin-carta.html -->
 <div class="max-w-6xl mx-auto p-4 space-y-6 relative">
 
   <!-- Alerta visual si el turno está cerrado -->
@@ -217,7 +218,7 @@
           <button 
             (click)="agregarEntrada()"
             [disabled]="!milorService.turnoAbierto()"
-            class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow transition active:scale-95 whitespace-nowrap">
+            class="w-full sm:w-auto px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow transition active:scale-95 whitespace-nowrap">
             + Agregar Entrada
           </button>
         </div>
