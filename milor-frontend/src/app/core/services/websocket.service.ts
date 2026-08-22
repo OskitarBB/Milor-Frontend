@@ -14,7 +14,6 @@ export class WebSocketService {
   constructor() {
     this.inicializarCliente();
     
-    // 🚀 Conexión automática al iniciar la app si ya existe una sesión activa
     if (localStorage.getItem('milor_token')) {
       this.conectar();
     }
@@ -24,7 +23,7 @@ export class WebSocketService {
     const token = localStorage.getItem('milor_token');
 
     this.stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('https://milor-backend.onrender.com/ws'),
       connectHeaders: {
         Authorization: token ? `Bearer ${token}` : ''
       },
@@ -38,7 +37,6 @@ export class WebSocketService {
       this.conectado = true;
       console.log('Conectado a STOMP WebSockets en tiempo real');
 
-      // Suscripción directa al canal exclusivo de ventas del backend
       this.stompClient?.subscribe('/topic/ventas', (message: IMessage) => {
         try {
           const data = JSON.parse(message.body);
