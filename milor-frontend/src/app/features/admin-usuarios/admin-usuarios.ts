@@ -27,7 +27,7 @@ import { AuthService } from '../../core/services/auth.service';
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
         
         <!-- Formulario Reactivo para Crear Usuario -->
-        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 relative z-30 transition-all">
           <h2 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">Nuevo Usuario</h2>
           
           <form [formGroup]="usuarioForm" (ngSubmit)="crearUsuario()" class="space-y-3">
@@ -55,7 +55,8 @@ import { AuthService } from '../../core/services/auth.service';
               </button>
 
               @if (dropdownAbierto()) {
-                <div class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-30 overflow-hidden py-1">
+                <!-- Se despliega hacia abajo con sombra y z-index alto -->
+                <div class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden py-1">
                   @for (rol of rolesDisponibles; track rol.value) {
                     <button 
                       type="button"
@@ -75,6 +76,11 @@ import { AuthService } from '../../core/services/auth.service';
                     class="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white font-bold text-xs rounded-xl transition shadow-sm uppercase tracking-wider active:scale-95 mt-2">
               + Registrar Usuario
             </button>
+
+            <!-- Espaciador dinámico: Empuja el fondo de la tarjeta hacia abajo solo cuando el menú está abierto para evitar cortes -->
+            @if (dropdownAbierto()) {
+              <div class="h-28 transition-all pointer-events-none"></div>
+            }
           </form>
         </div>
 
