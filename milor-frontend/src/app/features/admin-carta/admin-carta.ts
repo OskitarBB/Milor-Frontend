@@ -41,7 +41,7 @@ export class AdminCarta {
       if (data) {
         this.cartaEditable.set(JSON.parse(JSON.stringify(data)));
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   private normalizarTexto(texto: string): string {

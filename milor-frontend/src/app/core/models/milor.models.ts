@@ -1,6 +1,4 @@
-export type Modalidad = 'LOCAL' | 'LLEVAR';
 export type ModalidadConsumo = 'LOCAL' | 'LLEVAR';
-export type TipoMenu = 'COMPLETO' | 'SOLO_SEGUNDO' | 'EJECUTIVO' | 'CARTA';
 
 export interface Plato {
   id?: number;
@@ -16,32 +14,41 @@ export interface Entrada {
   activo?: boolean;
 }
 
-export interface ConfiguracionPrecio {
-  id?: number;
-  menuCompleto?: number;
-  soloSegundo?: number;
-  precioLocal?: number;
-  precioLlevar?: number;
-}
-
 export interface CartaDiariaDTO {
   platos: Plato[];
   entradas: Entrada[];
-  precios: ConfiguracionPrecio;
+  precios: {
+    menuCompleto: number;
+    soloSegundo: number;
+  };
 }
 
-export interface DetallePlatoMetrica {
-  nombre: string;
-  vendidos: number;
-  stockRestante: string;
+export interface ItemVentaRequest {
+  platoId: number;
+  entradaId: number | null;
+  tipo: string;
+  modalidad: ModalidadConsumo;
+  subtotal: number;
 }
 
-export interface OrdenReciente {
+export interface RegistroVentaRequest {
+  modalidad: ModalidadConsumo;
+  items: ItemVentaRequest[];
+}
+
+export interface ItemOrdenDTO {
+  platoNombre: string;
+  entradaNombre: string | null;
+  modalidad: ModalidadConsumo;
+  cantidad: number;
+}
+
+export interface OrdenRecienteDTO {
   id: number;
   fechaHora: string;
-  modalidad: Modalidad;
+  modalidad: ModalidadConsumo;
   total: number;
-  descripcionItems: string[];
+  items: ItemOrdenDTO[];
 }
 
 export interface DashboardMetricasDTO {
@@ -51,18 +58,11 @@ export interface DashboardMetricasDTO {
   totalLlevar: number;
   totalConEntrada: number;
   totalSinEntrada: number;
-  conteoPorPlato: { [key: string]: DetallePlatoMetrica };
-  ultimasVentas: OrdenReciente[];
-}
-
-export interface ItemVentaRequest {
-  platoId: number;
-  entradaId?: number | null;
-  tipo: TipoMenu;
-  subtotal: number;
-}
-
-export interface RegistroVentaRequest {
-  modalidad: Modalidad;
-  items: ItemVentaRequest[];
+  conteoPorPlato: Record<string, {
+    nombre: string;
+    vendidos: number;
+    stockRestante: string;
+    activo: boolean;
+  }>;
+  ultimasVentas: OrdenRecienteDTO[];
 }

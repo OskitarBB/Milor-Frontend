@@ -129,47 +129,48 @@
         </div>
       </div>
 
-      <!-- Lista de platos configurados -->
+      <!-- Lista de platos configurados (Muestra tanto activos como inactivos) -->
       <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
         @for (plato of cartaEditable().platos; track plato.id) {
-          @if (plato.activo) {
-            <div class="flex items-center justify-between p-3 border rounded-xl transition-all bg-slate-50 border-slate-200">
-              <div class="flex-1 pr-2">
-                <span class="text-xs font-bold text-slate-800 block">{{ plato.nombre }}</span>
-                <span class="text-[11px] text-slate-500">
-                  {{ plato.esIlimitado ? 'Stock: Ilimitado' : 'Stock actual: ' + plato.stock }}
-                </span>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <button 
-                  type="button"
-                  (click)="abrirEditarPlato(plato)"
-                  [disabled]="!milorService.turnoAbierto()"
-                  title="Editar plato"
-                  class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition">
-                  ✏️
-                </button>
-
-                <button 
-                  type="button"
-                  (click)="togglePlatoActivo(plato.id)"
-                  [disabled]="!milorService.turnoAbierto()"
-                  class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 disabled:opacity-40 transition">
-                  Activo
-                </button>
-
-                <button 
-                  type="button"
-                  (click)="eliminarPlato(plato.id)"
-                  [disabled]="!milorService.turnoAbierto()"
-                  title="Eliminar plato"
-                  class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-40 rounded-full text-xs font-bold">
-                  ✕
-                </button>
-              </div>
+          <div class="flex items-center justify-between p-3 border rounded-xl transition-all"
+               [class]="plato.activo ? 'bg-slate-50 border-slate-200' : 'bg-slate-100/70 border-slate-200 opacity-75'">
+            <div class="flex-1 pr-2">
+              <span class="text-xs font-bold text-slate-800 block" [class.line-through]="!plato.activo">{{ plato.nombre }}</span>
+              <span class="text-[11px] text-slate-500">
+                {{ plato.esIlimitado ? 'Stock: Ilimitado' : 'Stock actual: ' + plato.stock }}
+              </span>
             </div>
-          }
+
+            <div class="flex items-center gap-2">
+              <button 
+                type="button"
+                (click)="abrirEditarPlato(plato)"
+                [disabled]="!milorService.turnoAbierto()"
+                title="Editar plato"
+                class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition">
+                ✏️
+              </button>
+
+              <!-- Botón dinámico según el estado activo/inactivo -->
+              <button 
+                type="button"
+                (click)="togglePlatoActivo(plato.id)"
+                [disabled]="!milorService.turnoAbierto()"
+                class="px-2.5 py-1 rounded-lg text-xs font-bold transition border"
+                [class]="plato.activo ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300 border-slate-300'">
+                {{ plato.activo ? 'Activo' : 'Inactivo' }}
+              </button>
+
+              <button 
+                type="button"
+                (click)="eliminarPlato(plato.id)"
+                [disabled]="!milorService.turnoAbierto()"
+                title="Eliminar plato"
+                class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-40 rounded-full text-xs font-bold">
+                ✕
+              </button>
+            </div>
+          </div>
         } @empty {
           <div class="text-center py-8 text-slate-400 text-xs">
             No hay platos configurados para este turno. Usa el buscador superior para agregar o reutilizar platos.
@@ -224,44 +225,45 @@
         </div>
       </div>
 
-      <!-- Lista de entradas configuradas -->
+      <!-- Lista de entradas configuradas (Muestra tanto activas como inactivas) -->
       <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
         @for (entrada of cartaEditable().entradas; track entrada.id) {
-          @if (entrada.activo) {
-            <div class="flex items-center justify-between p-3 border rounded-xl transition-all bg-slate-50 border-slate-200">
-              <span class="text-xs font-bold text-slate-800 flex-1 pr-2">
-                🥗 {{ entrada.nombre }}
-              </span>
+          <div class="flex items-center justify-between p-3 border rounded-xl transition-all"
+               [class]="entrada.activo ? 'bg-slate-50 border-slate-200' : 'bg-slate-100/70 border-slate-200 opacity-75'">
+            <span class="text-xs font-bold text-slate-800 flex-1 pr-2" [class.line-through]="!entrada.activo">
+              🥗 {{ entrada.nombre }}
+            </span>
 
-              <div class="flex items-center gap-2">
-                <button 
-                  type="button"
-                  (click)="abrirEditarEntrada(entrada)"
-                  [disabled]="!milorService.turnoAbierto()"
-                  title="Editar entrada"
-                  class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition">
-                  ✏️
-                </button>
+            <div class="flex items-center gap-2">
+              <button 
+                type="button"
+                (click)="abrirEditarEntrada(entrada)"
+                [disabled]="!milorService.turnoAbierto()"
+                title="Editar entrada"
+                class="w-7 h-7 flex items-center justify-center bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 rounded-lg text-xs font-bold transition">
+                ✏️
+              </button>
 
-                <button 
-                  type="button"
-                  (click)="toggleEntradaActiva(entrada.id)"
-                  [disabled]="!milorService.turnoAbierto()"
-                  class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 disabled:opacity-40 transition">
-                  Activa
-                </button>
+              <!-- Botón dinámico según el estado activa/inactiva -->
+              <button 
+                type="button"
+                (click)="toggleEntradaActiva(entrada.id)"
+                [disabled]="!milorService.turnoAbierto()"
+                class="px-2.5 py-1 rounded-lg text-xs font-bold transition border"
+                [class]="entrada.activo ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300 border-slate-300'">
+                {{ entrada.activo ? 'Activa' : 'Inactiva' }}
+              </button>
 
-                <button 
-                  type="button"
-                  (click)="eliminarEntrada(entrada.id)"
-                  [disabled]="!milorService.turnoAbierto()"
-                  title="Eliminar entrada"
-                  class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-40 rounded-full text-xs font-bold">
-                  ✕
-                </button>
-              </div>
+              <button 
+                type="button"
+                (click)="eliminarEntrada(entrada.id)"
+                [disabled]="!milorService.turnoAbierto()"
+                title="Eliminar entrada"
+                class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-40 rounded-full text-xs font-bold">
+                ✕
+              </button>
             </div>
-          }
+          </div>
         } @empty {
           <div class="text-center py-8 text-slate-400 text-xs">
             No hay entradas configuradas para este turno. Usa el buscador superior para agregar o reutilizar entradas.

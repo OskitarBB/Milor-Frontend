@@ -1,3 +1,4 @@
+// milor.service.ts
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { WebSocketService } from './websocket.service';
@@ -11,6 +12,7 @@ export class MilorService {
   private readonly http = inject(HttpClient);
   private readonly ws = inject(WebSocketService);
   
+  // Apuntando correctamente al backend en Spring Boot
   private readonly apiUrl = 'http://localhost:8080/api';
 
   carta = signal<CartaDiariaDTO | null>(null);
@@ -48,7 +50,6 @@ export class MilorService {
         this.metricas.set(data);
       });
       
-      // 🚀 Suscripción en tiempo real para el estado de la caja y turnos
       this.ws.suscribir<any>('/topic/turno', (turno: any) => {
         const estado = typeof turno === 'string' ? turno : (turno?.estado || turno?.status || '');
         const esAbierto = String(estado).toUpperCase() === 'ABIERTO';
