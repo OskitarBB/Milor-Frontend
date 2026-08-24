@@ -1,6 +1,5 @@
-// historial-dashboard.ts
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MilorService } from '../../core/services/milor.service';
 import { DashboardMetricasDTO } from '../../core/models/milor.models';
@@ -8,7 +7,7 @@ import { DashboardMetricasDTO } from '../../core/models/milor.models';
 @Component({
   selector: 'app-historial-dashboard',
   standalone: true,
-  imports: [FormsModule, DecimalPipe],
+  imports: [CommonModule, FormsModule, DecimalPipe],
   templateUrl: './historial-dashboard.html',
   styleUrl: './historial-dashboard.css'
 })
@@ -23,15 +22,18 @@ export class HistorialDashboardComponent implements OnInit {
   metricas = signal<DashboardMetricasDTO | null>(null);
   cargando = signal<boolean>(false);
 
+  // Modal para ver el detalle completo de una orden específica
+  ordenSeleccionadaModal = signal<any | null>(null);
+
   ngOnInit(): void {
-    // Por defecto cargamos los últimos 7 días
-    this.filtrarRapido('7dias');
+    // Por defecto cargamos las ventas de hoy al abrir la sección
+    this.filtrarRapido('hoy');
   }
 
   buscarHistorial(): void {
     this.cargando.set(true);
     
-    // Concatenamos las horas para buscar desde el inicio del primer día hasta el final del último
+    // Concatenamos las horas para buscar desde el inicio del día hasta el final
     const inicio = `${this.fechaInicio()}T00:00:00`;
     const fin = `${this.fechaFin()}T23:59:59`;
 
@@ -97,9 +99,35 @@ export class HistorialDashboardComponent implements OnInit {
     const conteo = this.metricas()?.conteoPorPlato;
     if (!conteo) return [];
     
-    // Retornamos un arreglo ordenado de mayor a menor venta
     return Object.keys(conteo)
       .map(key => ({ id: key, ...conteo[Number(key)] }))
       .sort((a, b) => b.vendidos - a.vendidos);
+  }
+
+  readonly ventasRecientes = computed(() => {
+    return this.metricas()?.ultimasVentas || [];
+  });
+
+  // Formatea la fecha para que incluya el Día, Fecha y Hora exactos (Ej: LUNES, 24/08/2026 - 15:30:12)
+  formatearFechaLarga(fechaHoraStr: string): string {
+    if (!fechaHoraStr) return '';
+    const d = new Date(fechaHoraStr.endsWith('Z') || fechaHoraStr.includes('+') ? fechaHoraStr : fechaHoraStr + (fechaHoraStr.includes('T') ? '' : 'T00:00:00'));
+    const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+    const diaSemana = dias[d.getDay()];
+    const dia = String(d.getDate()).padStart(2, '0');
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const anio = d.getFullYear();
+    const hora = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const seg = String(d.getSeconds()).padStart(2, '0');
+    return `${diaSemana}, ${dia}/${mes}/${anio} - ${hora}:${min}:${seg}`;
+  }
+
+  verDetalleOrden(venta: any): void {
+    this.ordenSeleccionadaModal.set(venta);
+  }
+
+  cerrarDetalleOrden(): void {
+    this.ordenSeleccionadaModal.set(null);
   }
 }
