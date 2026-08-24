@@ -144,7 +144,7 @@
       </div>
     </div>
 
-    <!-- Lista de Últimas Ventas (Tarjetas limpias con vista previa y opción de ver modal) -->
+    <!-- Lista de Últimas Ventas -->
     <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
       <div>
         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
@@ -190,10 +190,10 @@
                 }
               </div>
 
-              <!-- Total Venta y aviso de clic -->
+              <!-- Total Venta y aviso de clic (Corregido) -->
               <div class="flex justify-between items-center pt-2 border-t border-slate-200/60 text-xs">
                 <span class="text-slate-400 font-bold text-[10px] uppercase">Detalles 🔍</span>
-                <span class="font-black text-sm text-slate-900 bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-lg border border-emerald-200/60">
+                <span class="font-black text-sm bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-lg border border-emerald-200/60">
                   S/ {{ venta.total | number:'1.2-2' }}
                 </span>
               </div>
@@ -210,7 +210,7 @@
 
   </div>
 
-  <!-- MODAL DE DETALLE DE ORDEN (SE ABRE AL HACER CLIC EN UNA TARJETA) -->
+  <!-- MODAL DE DETALLE DE ORDEN -->
   @if (ordenSeleccionadaModal(); as orden) {
     <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl p-5 sm:p-6 w-full max-w-md shadow-2xl border border-slate-100 space-y-4 animate-scale-up">
@@ -238,9 +238,10 @@
           </div>
         </div>
 
+        <!-- Total Cobrado (Corregido) -->
         <div class="flex justify-between items-center pt-3 border-t border-slate-200">
           <span class="text-xs font-bold text-slate-500 uppercase">Total Cobrado:</span>
-          <span class="text-lg font-black text-slate-900 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl border border-emerald-200">
+          <span class="text-lg font-black bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl border border-emerald-200">
             S/ {{ orden.total | number:'1.2-2' }}
           </span>
         </div>
