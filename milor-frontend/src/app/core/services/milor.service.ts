@@ -11,6 +11,7 @@ export class MilorService {
   private readonly http = inject(HttpClient);
   private readonly ws = inject(WebSocketService);
   
+  // Apuntando correctamente al backend en Spring Boot
   private readonly apiUrl = 'https://milor-backend.onrender.com/api';
 
   carta = signal<CartaDiariaDTO | null>(null);

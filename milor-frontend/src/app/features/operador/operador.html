@@ -1,7 +1,6 @@
 <!-- operador.html -->
 <div class="max-w-7xl mx-auto p-4 space-y-6">
 
-  <!-- Alerta y Bloqueo Visual si el Turno está Cerrado -->
   @if (!milorService.turnoAbierto()) {
     <div class="flex flex-col items-center justify-center min-h-[55vh] text-center p-8 bg-white rounded-3xl border border-slate-200 shadow-sm">
       <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-4 font-black shadow-inner">⚠️</div>
@@ -9,15 +8,14 @@
       <p class="text-xs text-slate-500 max-w-md mt-1 mb-6">El turno actual se encuentra cerrado. Para poder realizar pedidos y registrar ventas, el administrador debe abrir un nuevo Turno.</p>
     </div>
   } @else {
-    <!-- Panel Operativo Visible Solo con Turno Abierto -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       
-      <!-- Columna Izquierda: Selección Táctil de Menú -->
+      <!-- Columna Izquierda: Menú -->
       <div class="lg:col-span-2 space-y-6">
 
-        <!-- 1. Switch de Modalidad -->
+        <!-- 1. Switch de Modalidad por Defecto -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">1. Modalidad de Consumo</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">1. Modalidad por Defecto para Nuevos Platos</span>
           <div class="grid grid-cols-2 gap-3">
             <button 
               (click)="cambiarModalidad('LOCAL')"
@@ -34,7 +32,7 @@
           </div>
         </div>
 
-        <!-- 2. Selección de Plato de Fondo -->
+        <!-- 2. Selección de Plato -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">2. Segundo (Plato de Fondo)</span>
           <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -91,10 +89,6 @@
                 <span class="truncate w-full" [class.line-through]="entrada.activo === false">
                   🥗 {{ entrada.nombre }}
                 </span>
-
-                @if (entrada.activo === false) {
-                  <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold">Inactiva</span>
-                }
               </button>
             }
           </div>
@@ -109,19 +103,40 @@
 
       </div>
 
-      <!-- Columna Derecha: Resumen de Orden -->
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+      <!-- Columna Derecha: Resumen de Orden Actual con Animaciones -->
+      <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between">
         
         <div>
-          <div class="flex items-center justify-between border-b pb-3 mb-3">
-            <h2 class="text-lg font-bold text-slate-800">Orden Actual</h2>
-            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold uppercase">
-              {{ modalidad() }}
-            </span>
+          <!-- Cabecera con Animación de Desplazamiento (Centro ⇄ Izquierda) -->
+          <div class="border-b border-slate-100 pb-3.5 mb-4 transition-all duration-500 ease-in-out">
+            <div class="flex items-center transition-all duration-500 ease-in-out"
+                 [class.justify-between]="pedidoActual().length > 0 || ordenRegistradaExito()"
+                 [class.justify-center]="pedidoActual().length === 0 && !ordenRegistradaExito()">
+              
+              <h2 class="text-base font-black text-slate-800 uppercase tracking-wide transition-all duration-500">
+                Orden Actual
+              </h2>
+              
+              @if (pedidoActual().length > 0) {
+                <span class="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-full text-[10px] font-extrabold uppercase animate-pulse transition-all duration-500">
+                  En Proceso
+                </span>
+              } @else if (ordenRegistradaExito()) {
+                <span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full text-[10px] font-extrabold uppercase transition-all duration-500">
+                  ¡Finalizado!
+                </span>
+              }
+            </div>
+
+            <p class="text-[11px] font-semibold text-slate-400 mt-1 transition-all duration-500 ease-in-out"
+               [class.text-center]="pedidoActual().length === 0 && !ordenRegistradaExito()"
+               [class.text-left]="pedidoActual().length > 0 || ordenRegistradaExito()">
+              💡 Modifica la entrada o modalidad directamente en cada ítem
+            </p>
           </div>
 
           @if (mensajeError()) {
-            <div class="p-3 mb-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-medium">
+            <div class="p-3 mb-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl font-medium">
               ⚠️ {{ mensajeError() }}
             </div>
           }
@@ -131,50 +146,80 @@
             </div>
           }
 
-          <!-- Lista de Ítems en el Pedido Agrupados con su Cantidad -->
-          <div class="space-y-2 overflow-y-auto max-h-72 pr-1">
+          <!-- Lista de Ítems en el Pedido -->
+          <div class="space-y-3 overflow-y-auto max-h-80 pr-1">
             @for (item of pedidoActual(); track $index) {
-              <div class="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                <div class="flex-1 pr-2 flex items-start gap-2">
-                  <!-- Badge de cantidad numérica -->
-                  <span class="px-2 py-0.5 bg-slate-900 text-white rounded-lg text-xs font-black shrink-0">
-                    {{ item.cantidad }}x
-                  </span>
-                  <div>
-                    <p class="font-bold text-xs text-slate-800">{{ item.plato.nombre }}</p>
-                    <p class="text-[11px] text-slate-500">
-                      {{ item.entrada ? '🥗 ' + item.entrada.nombre : '🚫 Solo Segundo' }}
-                    </p>
+              <div class="flex flex-col p-3 bg-slate-50/90 hover:bg-slate-50 border border-slate-200/70 rounded-2xl gap-2.5 transition-all duration-300 shadow-2xs">
+                
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="px-2.5 py-1 bg-slate-900 text-white rounded-xl text-xs font-black shrink-0 shadow-xs">
+                      {{ item.cantidad }}x
+                    </span>
+                    <p class="font-black text-xs text-slate-800 truncate">{{ item.plato.nombre }}</p>
+                  </div>
+                  
+                  <span class="text-xs font-black text-slate-900 shrink-0">S/ {{ item.subtotal.toFixed(2) }}</span>
+                </div>
+
+                <!-- Selector de Entrada -->
+                <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/50">
+                  <div class="relative flex-1">
+                    <select 
+                      (change)="cambiarEntradaItem($index, $any($event.target).value)"
+                      class="w-full appearance-none text-[11px] bg-white border border-slate-300 hover:border-amber-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 rounded-xl px-3 py-1.5 pr-7 font-bold text-slate-700 outline-none cursor-pointer shadow-2xs transition">
+                      <option [value]="'SIN_ENTRADA'" [selected]="!item.entrada">🚫 Sin Entrada</option>
+                      @for (e of entradasDisponibles(); track e.id) {
+                        <option [value]="e.id" [selected]="item.entrada?.id === e.id">🥗 {{ e.nombre }}</option>
+                      }
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <!-- Botón de Modalidad -->
+                    <button 
+                      type="button"
+                      (click)="cambiarModalidadItem($index)"
+                      class="px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition active:scale-95 shadow-2xs cursor-pointer"
+                      [class]="item.modalidad === 'LOCAL' ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-amber-500 text-white hover:bg-amber-600'"
+                      title="Clic para alternar modalidad">
+                      {{ item.modalidad }}
+                    </button>
+
+                    <!-- Botón Eliminar -->
+                    <button 
+                      (click)="quitarItem($index)"
+                      class="w-7 h-7 flex items-center justify-center bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-bold transition">
+                      ✕
+                    </button>
                   </div>
                 </div>
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-bold text-slate-800">S/ {{ item.subtotal.toFixed(2) }}</span>
-                  <button 
-                    (click)="quitarItem($index)"
-                    class="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 rounded-full text-xs font-bold">
-                    ✕
-                  </button>
-                </div>
+
               </div>
             } @empty {
-              <div class="text-center py-8 text-slate-400 text-xs">
+              <div class="text-center py-12 text-slate-400 text-xs font-medium">
                 No hay platos agregados a la orden.
               </div>
             }
           </div>
         </div>
 
-        <!-- Pie del Panel: Total y Acción de Envío -->
-        <div class="border-t pt-4 mt-4 space-y-3">
-          <div class="flex justify-between items-baseline">
-            <span class="text-sm font-semibold text-slate-500">Total a Cobrar:</span>
+        <!-- Pie del Panel -->
+        <div class="border-t border-slate-100 pt-4 mt-4 space-y-3">
+          <div class="flex justify-between items-baseline px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total a Cobrar:</span>
             <span class="text-2xl font-black text-slate-900">S/ {{ totalPedido().toFixed(2) }}</span>
           </div>
 
           <button 
             (click)="procesarPedido()"
             [disabled]="pedidoActual().length === 0 || !milorService.turnoAbierto()"
-            class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-base font-bold rounded-xl shadow-lg transition active:scale-98">
+            class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-sm font-black rounded-2xl shadow-lg transition active:scale-98 tracking-wide">
             ⚡ REGISTRAR PEDIDO
           </button>
         </div>

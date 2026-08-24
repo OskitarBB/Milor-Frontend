@@ -1,3 +1,4 @@
+// operador.ts
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -7,8 +8,10 @@ import { ModalidadConsumo, Plato, Entrada, RegistroVentaRequest } from '../../co
 interface ItemPedidoVista {
   plato: Plato;
   entrada: Entrada | null;
-  cantidad: number; // Cantidad acumulada del mismo plato y entrada
-  subtotal: number; // Subtotal total para este grupo (cantidad * precio unitario)
+  modalidad: ModalidadConsumo;
+  cantidad: number;
+  subtotal: number;
+  showDropdown?: boolean;
 }
 
 @Component({
@@ -32,11 +35,13 @@ export class Operador {
   readonly entradaSeleccionada = signal<Entrada | 'SIN_ENTRADA' | null>('SIN_ENTRADA');
   readonly pedidoActual = signal<ItemPedidoVista[]>([]);
 
+  readonly ordenRegistradaExito = signal<boolean>(false);
   readonly mensajeError = signal<string | null>(null);
   readonly mensajeExito = signal<string | null>(null);
 
-  readonly platosDisponibles = computed(() => this.carta().platos.filter(p => p.activo !== false));
-  readonly entradasDisponibles = computed(() => this.carta().entradas.filter(e => e.activo !== false));
+  // Muestra todos los platos y entradas (activos e inactivos) sincronizados en tiempo real
+  readonly platosDisponibles = computed(() => this.carta().platos);
+  readonly entradasDisponibles = computed(() => this.carta().entradas);
 
   readonly totalPedido = computed(() => {
     return this.pedidoActual().reduce((acc, item) => acc + item.subtotal, 0);
@@ -55,7 +60,6 @@ export class Operador {
     } else {
       this.platoSeleccionado.set(plato);
     }
-    
     this.mensajeError.set(null);
   }
 
@@ -86,38 +90,98 @@ export class Operador {
       : Number(precios.soloSegundo || 10);
 
     const entradaActual = esCompleto ? (this.entradaSeleccionada() as Entrada) : null;
+    const modalidadActual = this.modalidad();
 
     this.pedidoActual.update(items => {
-      // Buscamos si ya existe en la orden un ítem con el mismo plato y la misma entrada
       const index = items.findIndex(item => 
         item.plato.id === plato.id && 
+        item.modalidad === modalidadActual &&
         ((item.entrada === null && entradaActual === null) || (item.entrada?.id === entradaActual?.id))
       );
 
       if (index !== -1) {
-        // Si ya existe, incrementamos la cantidad y recalculamos el subtotal del grupo
         const updated = [...items];
         const existing = updated[index];
         const nuevaCantidad = existing.cantidad + 1;
         updated[index] = {
           ...existing,
           cantidad: nuevaCantidad,
-          subtotal: nuevaCantidad * precioUnitario
+          subtotal: nuevaCantidad * precioUnitario,
+          showDropdown: false
         };
         return updated;
       } else {
-        // Si no existe, lo agregamos como un nuevo bloque con cantidad 1
         return [...items, {
           plato: plato,
           entrada: entradaActual,
+          modalidad: modalidadActual,
           cantidad: 1,
-          subtotal: precioUnitario
+          subtotal: precioUnitario,
+          showDropdown: false
         }];
       }
     });
 
     this.platoSeleccionado.set(null);
     this.entradaSeleccionada.set('SIN_ENTRADA');
+  }
+
+  cambiarModalidadItem(index: number): void {
+    this.pedidoActual.update(items => {
+      const updated = [...items];
+      const item = updated[index];
+      const nuevaMod: ModalidadConsumo = item.modalidad === 'LOCAL' ? 'LLEVAR' : 'LOCAL';
+      
+      updated[index] = {
+        ...item,
+        modalidad: nuevaMod
+      };
+      return updated;
+    });
+  }
+
+  toggleDropdownItem(index: number, event: Event): void {
+    event.stopPropagation();
+    this.pedidoActual.update(items => {
+      return items.map((item, i) => {
+        if (i === index) {
+          return { ...item, showDropdown: !item.showDropdown };
+        }
+        return { ...item, showDropdown: false };
+      });
+    });
+  }
+
+  // Función requerida por el HTML para cambiar la entrada desde el menú flotante
+  cambiarEntradaItem(index: number, entradaObjOrId: Entrada | 'SIN_ENTRADA' | string | number): void {
+    this.pedidoActual.update(items => {
+      const updated = [...items];
+      const item = updated[index];
+      const precios = this.carta().precios;
+
+      let nuevaEntrada: Entrada | null = null;
+      if (entradaObjOrId !== 'SIN_ENTRADA') {
+        if (typeof entradaObjOrId === 'object' && entradaObjOrId !== null) {
+          nuevaEntrada = entradaObjOrId;
+        } else {
+          nuevaEntrada = this.carta().entradas.find(e => e.id === Number(entradaObjOrId)) || null;
+        }
+      }
+
+      const esCompletoAhora = nuevaEntrada !== null;
+      const nuevoPrecioUnitario = esCompletoAhora
+        ? Number(precios.menuCompleto || 12)
+        : Number(precios.soloSegundo || 10);
+
+      updated[index] = {
+        ...item,
+        entrada: nuevaEntrada,
+        subtotal: item.cantidad * nuevoPrecioUnitario,
+        showDropdown: false
+      };
+
+      return updated;
+    });
   }
 
   quitarItem(index: number): void {
@@ -132,8 +196,6 @@ export class Operador {
 
     if (this.pedidoActual().length === 0) return;
 
-    // Expandimos los grupos con cantidad > 1 en ítems individuales para que el backend 
-    // procese el stock y los detalles correctamente sin requerir cambios en Java.
     const itemsExpandidos: any[] = [];
     for (const item of this.pedidoActual()) {
       const precioUnitario = item.subtotal / item.cantidad;
@@ -142,6 +204,7 @@ export class Operador {
           platoId: item.plato.id!,
           entradaId: item.entrada?.id || null,
           tipo: item.entrada ? 'COMPLETO' : 'SOLO_SEGUNDO',
+          modalidad: item.modalidad,
           subtotal: precioUnitario
         });
       }
@@ -155,8 +218,13 @@ export class Operador {
     this.milorService.registrarVenta(payload).subscribe({
       next: () => {
         this.pedidoActual.set([]);
+        this.ordenRegistradaExito.set(true);
         this.mensajeExito.set('¡Venta registrada con éxito!');
-        setTimeout(() => this.mensajeExito.set(null), 3000);
+        
+        setTimeout(() => {
+          this.ordenRegistradaExito.set(false);
+          this.mensajeExito.set(null);
+        }, 3000);
       },
       error: (err) => {
         this.mensajeError.set(err.error?.message || 'Error al procesar la venta en el servidor');
