@@ -11,7 +11,7 @@
         <p class="text-xs text-slate-500 mt-0.5">Analiza el rendimiento de días anteriores y métricas acumuladas.</p>
       </div>
       
-      <!-- Píldoras de Acceso Rápido (Mejor posicionadas y responsivas) -->
+      <!-- Píldoras de Acceso Rápido[cite: 11] -->
       <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-auto justify-center">
         <button (click)="filtrarRapido('hoy')" 
                 class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-bold rounded-lg transition"
@@ -31,7 +31,7 @@
       </div>
     </div>
 
-    <!-- Fila Inferior: Selectores de Fecha y Botón Actualizar -->
+    <!-- Fila Inferior: Selectores de Fecha y Botón Actualizar[cite: 11] -->
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-slate-100">
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
         <div class="flex items-center gap-1.5 flex-1">
@@ -55,13 +55,13 @@
 
   </div>
 
-  <!-- Contenedor con Transición Suave Anti-Parpadeo -->
+  <!-- Contenedor con Transición Suave Anti-Parpadeo[cite: 11] -->
   <div class="transition-opacity duration-200 space-y-4 sm:space-y-6" [class.opacity-60]="cargando()">
     @if (metricas()) {
-      <!-- Tarjetas Principales - 2 columnas en móvil para compactar la vista -->
+      <!-- Tarjetas Principales - 2 columnas en móvil[cite: 11] -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         
-        <!-- Tarjeta 1: Total Recaudado -->
+        <!-- Tarjeta 1: Total Recaudado[cite: 11] -->
         <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Recaudado</span>
@@ -70,7 +70,7 @@
           <span class="text-[10px] sm:text-xs font-bold text-emerald-600 mt-3">Rango seleccionado</span>
         </div>
 
-        <!-- Tarjeta 2: Menús Vendidos -->
+        <!-- Tarjeta 2: Menús Vendidos[cite: 11] -->
         <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Menús Vendidos</span>
@@ -79,7 +79,7 @@
           <span class="text-[10px] sm:text-xs font-medium text-slate-400 mt-3">Platos despachados</span>
         </div>
 
-        <!-- Tarjeta 3: Modalidad -->
+        <!-- Tarjeta 3: Modalidad[cite: 11] -->
         <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Modalidad</span>
@@ -94,7 +94,7 @@
           </div>
         </div>
 
-        <!-- Tarjeta 4: Entradas -->
+        <!-- Tarjeta 4: Entradas[cite: 11] -->
         <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
           <div>
             <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Entradas</span>
@@ -111,38 +111,155 @@
 
       </div>
 
-      <!-- Tabla Ranking de Platos -->
-      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <h2 class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Ranking de Platos Más Vendidos</h2>
+      <!-- Sección Inferior: Ranking de Platos (2 Cols) + Ventas Registradas (1 Col) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-start">
         
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs min-w-[300px]">
-            <thead>
-              <tr class="border-b border-slate-200 text-slate-400 font-bold">
-                <th class="pb-3 w-12 text-center">Nº</th>
-                <th class="pb-3">PLATO</th>
-                <th class="pb-3 text-right">CANTIDAD VENDIDA</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              @for (plato of resumenPlatos; track plato.id; let i = $index) {
-                @if (plato.vendidos > 0) {
-                  <tr class="hover:bg-slate-50 transition">
-                    <td class="py-3 text-center font-bold text-slate-400">{{ i + 1 }}</td>
-                    <td class="py-3 font-bold text-slate-800">{{ plato.nombre }}</td>
-                    <td class="py-3 text-right font-black text-emerald-600">{{ plato.vendidos }} unid.</td>
+        <!-- Tabla Ranking de Platos -->
+        <div class="lg:col-span-2 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h2 class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Ranking de Platos Más Vendidos</h2>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs min-w-[300px]">
+              <thead>
+                <tr class="border-b border-slate-200 text-slate-400 font-bold">
+                  <th class="pb-3 w-12 text-center">Nº</th>
+                  <th class="pb-3">PLATO</th>
+                  <th class="pb-3 text-right">CANTIDAD VENDIDA</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (plato of resumenPlatos; track plato.id; let i = $index) {
+                  @if (plato.vendidos > 0) {
+                    <tr class="hover:bg-slate-50 transition">
+                      <td class="py-3 text-center font-bold text-slate-400">{{ i + 1 }}</td>
+                      <td class="py-3 font-bold text-slate-800">{{ plato.nombre }}</td>
+                      <td class="py-3 text-right font-black text-emerald-600">{{ plato.vendidos }} unid.</td>
+                    </tr>
+                  }
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="py-8 text-center text-slate-400">No hay ventas registradas en este rango de fechas.[cite: 11]</td>
                   </tr>
                 }
-              } @empty {
-                <tr>
-                  <td colspan="3" class="py-8 text-center text-slate-400">No hay ventas registradas en este rango de fechas.</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- Lista de Ventas Registradas (Con formato Día, Fecha y Hora + Modal) -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+              <h2 class="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">Ventas Registradas</h2>
+              <span class="text-[10px] font-bold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded-full">Historial</span>
+            </div>
+            
+            <div class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+              @for (venta of ventasRecientes(); track venta.id) {
+                <div 
+                  (click)="verDetalleOrden(venta)"
+                  class="p-3.5 bg-gradient-to-br from-slate-50/90 to-slate-100/40 border border-slate-200/80 rounded-2xl space-y-2 shadow-2xs hover:shadow-md hover:border-amber-400 transition cursor-pointer group">
+                  
+                  <!-- Cabecera de la orden con Día, Fecha y Hora -->
+                  <div class="flex flex-col gap-1 text-xs">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1 font-extrabold text-slate-700 bg-white px-2 py-1 rounded-lg border border-slate-200/60 text-[10px]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{{ formatearFechaLarga(venta.fechaHora) }}</span>
+                      </div>
+
+                      <span class="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider"
+                        [class]="venta.modalidad === 'LOCAL' ? 'bg-slate-900 text-white' : 'bg-amber-500 text-white'">
+                        {{ venta.modalidad }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Vista previa de los primeros ítems -->
+                  <div class="space-y-1">
+                    @for (item of venta.descripcionItems.slice(0, 2); track $index) {
+                      <div class="text-xs font-bold text-slate-700 bg-white px-3 py-1.5 rounded-xl border border-slate-200/50 flex items-center shadow-2xs truncate">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-2 flex-shrink-0"></span>
+                        <span class="truncate">{{ item }}</span>
+                      </div>
+                    }
+                    
+                    @if (venta.descripcionItems.length > 2) {
+                      <div class="text-[11px] font-bold text-amber-600 px-1 pt-0.5 flex items-center justify-between">
+                        <span>+ {{ venta.descripcionItems.length - 2 }} plato(s) más...</span>
+                        <span class="text-[10px] underline text-slate-500 group-hover:text-amber-700">Ver todo</span>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Total Venta y aviso de clic -->
+                  <div class="flex justify-between items-center pt-2 border-t border-slate-200/60 text-xs">
+                    <span class="text-slate-400 font-bold text-[10px] uppercase">Detalles 🔍</span>
+                    <span class="font-black text-sm text-slate-900 bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-lg border border-emerald-200/60">
+                      S/ {{ venta.total | number:'1.2-2' }}
+                    </span>
+                  </div>
+
+                </div>
+              } @empty {
+                <div class="text-center py-12 text-slate-400 text-xs font-medium">
+                  No hay ventas registradas en este período.
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
       </div>
     }
   </div>
+
+  <!-- MODAL DE DETALLE DE ORDEN (SE ABRE AL HACER CLIC EN UNA TARJETA) -->
+  @if (ordenSeleccionadaModal(); as orden) {
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl p-5 sm:p-6 w-full max-w-md shadow-2xl border border-slate-100 space-y-4">
+        
+        <div class="flex justify-between items-center border-b pb-3">
+          <div>
+            <h3 class="text-sm sm:text-base font-black text-slate-800 uppercase tracking-wide">Orden #{{ orden.id }}</h3>
+            <p class="text-xs text-slate-500">{{ formatearFechaLarga(orden.fechaHora) }}</p>
+          </div>
+          <span class="px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider"
+            [class]="orden.modalidad === 'LOCAL' ? 'bg-slate-900 text-white' : 'bg-amber-500 text-white'">
+            {{ orden.modalidad }}
+          </span>
+        </div>
+
+        <div>
+          <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Platos y Entradas de la Orden:</span>
+          <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+            @for (item of orden.descripcionItems; track $index) {
+              <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>
+                <span>{{ item }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-3 border-t border-slate-200">
+          <span class="text-xs font-bold text-slate-500 uppercase">Total Cobrado:</span>
+          <span class="text-lg font-black text-slate-900 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl border border-emerald-200">
+            S/ {{ orden.total | number:'1.2-2' }}
+          </span>
+        </div>
+
+        <button 
+          type="button" 
+          (click)="cerrarDetalleOrden()" 
+          class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition active:scale-95 shadow">
+          Cerrar Detalle
+        </button>
+
+      </div>
+    </div>
+  }
 
 </div>

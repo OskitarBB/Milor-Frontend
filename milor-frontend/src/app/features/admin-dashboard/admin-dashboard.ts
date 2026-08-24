@@ -23,8 +23,9 @@ export class AdminDashboardComponent implements OnInit {
   turnoAbierto = signal<boolean>(false);
   cargandoTurno = signal<boolean>(false);
   
-  // 🚀 Control del modal de confirmación ('ABRIR' | 'CERRAR' | null)
+  // Control de modales
   modalAccion = signal<'ABRIR' | 'CERRAR' | null>(null);
+  ordenSeleccionadaModal = signal<any | null>(null); // 🔍 Modal para ver detalle de una orden
 
   ngOnInit(): void {
     this.verificarEstadoTurno();
@@ -92,6 +93,14 @@ export class AdminDashboardComponent implements OnInit {
 
   cerrarModal(): void {
     this.modalAccion.set(null);
+  }
+
+  verDetalleOrden(venta: any): void {
+    this.ordenSeleccionadaModal.set(venta);
+  }
+
+  cerrarDetalleOrden(): void {
+    this.ordenSeleccionadaModal.set(null);
   }
 
   ejecutarAccionTurno(): void {

@@ -7,7 +7,8 @@ import { ModalidadConsumo, Plato, Entrada, RegistroVentaRequest } from '../../co
 interface ItemPedidoVista {
   plato: Plato;
   entrada: Entrada | null;
-  subtotal: number;
+  cantidad: number; // Cantidad acumulada del mismo plato y entrada
+  subtotal: number; // Subtotal total para este grupo (cantidad * precio unitario)
 }
 
 @Component({
@@ -34,7 +35,6 @@ export class Operador {
   readonly mensajeError = signal<string | null>(null);
   readonly mensajeExito = signal<string | null>(null);
 
-  // 🚀 Filtramos para mostrar únicamente los platos y entradas activos del turno actual
   readonly platosDisponibles = computed(() => this.carta().platos.filter(p => p.activo !== false));
   readonly entradasDisponibles = computed(() => this.carta().entradas.filter(e => e.activo !== false));
 
@@ -50,7 +50,6 @@ export class Operador {
   seleccionarPlato(plato: Plato): void {
     if (!this.milorService.turnoAbierto() || plato.activo === false) return;
     
-    // Si el plato ya está seleccionado, se deselecciona (vuelve a null)
     if (this.platoSeleccionado()?.id === plato.id) {
       this.platoSeleccionado.set(null);
     } else {
@@ -64,7 +63,6 @@ export class Operador {
     if (!this.milorService.turnoAbierto()) return;
     if (entrada !== 'SIN_ENTRADA' && entrada.activo === false) return;
     
-    // Si la entrada seleccionada es la misma que se vuelve a presionar, regresa a 'SIN_ENTRADA'
     if (this.entradaSeleccionada() === entrada) {
       this.entradaSeleccionada.set('SIN_ENTRADA');
     } else {
@@ -83,17 +81,41 @@ export class Operador {
 
     const esCompleto = this.entradaSeleccionada() !== 'SIN_ENTRADA' && this.entradaSeleccionada() !== null;
     const precios = this.carta().precios;
-    const precio = esCompleto
+    const precioUnitario = esCompleto
       ? Number(precios.menuCompleto || 12)
       : Number(precios.soloSegundo || 10);
 
-    const nuevoItem: ItemPedidoVista = {
-      plato: plato,
-      entrada: esCompleto ? (this.entradaSeleccionada() as Entrada) : null,
-      subtotal: precio
-    };
+    const entradaActual = esCompleto ? (this.entradaSeleccionada() as Entrada) : null;
 
-    this.pedidoActual.update(items => [...items, nuevoItem]);
+    this.pedidoActual.update(items => {
+      // Buscamos si ya existe en la orden un ítem con el mismo plato y la misma entrada
+      const index = items.findIndex(item => 
+        item.plato.id === plato.id && 
+        ((item.entrada === null && entradaActual === null) || (item.entrada?.id === entradaActual?.id))
+      );
+
+      if (index !== -1) {
+        // Si ya existe, incrementamos la cantidad y recalculamos el subtotal del grupo
+        const updated = [...items];
+        const existing = updated[index];
+        const nuevaCantidad = existing.cantidad + 1;
+        updated[index] = {
+          ...existing,
+          cantidad: nuevaCantidad,
+          subtotal: nuevaCantidad * precioUnitario
+        };
+        return updated;
+      } else {
+        // Si no existe, lo agregamos como un nuevo bloque con cantidad 1
+        return [...items, {
+          plato: plato,
+          entrada: entradaActual,
+          cantidad: 1,
+          subtotal: precioUnitario
+        }];
+      }
+    });
+
     this.platoSeleccionado.set(null);
     this.entradaSeleccionada.set('SIN_ENTRADA');
   }
@@ -110,14 +132,24 @@ export class Operador {
 
     if (this.pedidoActual().length === 0) return;
 
+    // Expandimos los grupos con cantidad > 1 en ítems individuales para que el backend 
+    // procese el stock y los detalles correctamente sin requerir cambios en Java.
+    const itemsExpandidos: any[] = [];
+    for (const item of this.pedidoActual()) {
+      const precioUnitario = item.subtotal / item.cantidad;
+      for (let i = 0; i < item.cantidad; i++) {
+        itemsExpandidos.push({
+          platoId: item.plato.id!,
+          entradaId: item.entrada?.id || null,
+          tipo: item.entrada ? 'COMPLETO' : 'SOLO_SEGUNDO',
+          subtotal: precioUnitario
+        });
+      }
+    }
+
     const payload: RegistroVentaRequest = {
       modalidad: this.modalidad(),
-      items: this.pedidoActual().map(item => ({
-        platoId: item.plato.id!,
-        entradaId: item.entrada?.id || null,
-        tipo: item.entrada ? 'COMPLETO' : 'SOLO_SEGUNDO',
-        subtotal: item.subtotal
-      }))
+      items: itemsExpandidos
     };
 
     this.milorService.registrarVenta(payload).subscribe({
