@@ -1,4 +1,3 @@
-// historial-dashboard.ts
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,29 +11,24 @@ import { DashboardMetricasDTO } from '../../core/models/milor.models';
   templateUrl: './historial-dashboard.html',
   styleUrl: './historial-dashboard.css'
 })
-export class HistorialDashboardComponent implements OnInit {
+export class HistorialDashboard implements OnInit {
   private readonly milorService = inject(MilorService);
 
-  // Filtros de fecha usando Signals
   fechaInicio = signal<string>('');
   fechaFin = signal<string>('');
   
-  // Estado de la data
   metricas = signal<DashboardMetricasDTO | null>(null);
   cargando = signal<boolean>(false);
 
-  // Modal para ver el detalle completo de una orden específica
   ordenSeleccionadaModal = signal<any | null>(null);
 
   ngOnInit(): void {
-    // Por defecto cargamos las ventas de hoy al abrir la sección
     this.filtrarRapido('hoy');
   }
 
   buscarHistorial(): void {
     this.cargando.set(true);
     
-    // Concatenamos las horas para buscar desde el inicio del día hasta el final
     const inicio = `${this.fechaInicio()}T00:00:00`;
     const fin = `${this.fechaFin()}T23:59:59`;
 
@@ -50,7 +44,6 @@ export class HistorialDashboardComponent implements OnInit {
     });
   }
 
-  // Función para establecer los rangos de fecha mediante los botones rápidos
   filtrarRapido(tipo: 'hoy' | 'ayer' | '7dias'): void {
     const hoy = new Date();
     const formatoFecha = (d: Date) => d.toISOString().split('T')[0];
@@ -75,7 +68,6 @@ export class HistorialDashboardComponent implements OnInit {
     this.buscarHistorial();
   }
 
-  // Controla qué botón rápido se encuentra activo visualmente
   esFiltroActivo(tipo: string): boolean {
     const hoy = new Date().toISOString().split('T')[0];
     if (tipo === 'hoy') {
@@ -95,7 +87,6 @@ export class HistorialDashboardComponent implements OnInit {
     return false;
   }
 
-  // Computed property getter para ordenar el ranking
   get resumenPlatos() {
     const conteo = this.metricas()?.conteoPorPlato;
     if (!conteo) return [];
@@ -109,7 +100,6 @@ export class HistorialDashboardComponent implements OnInit {
     return this.metricas()?.ultimasVentas || [];
   });
 
-  // Formatea la fecha para que incluya el Día, Fecha y Hora exactos (Ej: LUNES, 24/08/2026 - 15:30:12)
   formatearFechaLarga(fechaHoraStr: string): string {
     if (!fechaHoraStr) return '';
     const d = new Date(fechaHoraStr.endsWith('Z') || fechaHoraStr.includes('+') ? fechaHoraStr : fechaHoraStr + (fechaHoraStr.includes('T') ? '' : 'T00:00:00'));
