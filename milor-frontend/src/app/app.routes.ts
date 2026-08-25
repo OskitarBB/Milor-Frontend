@@ -27,13 +27,13 @@ export const routes: Routes = [
   {
     path: 'admin/dashboard',
     loadComponent: () =>
-      import('./features/admin-dashboard/admin-dashboard').then(m => m.AdminDashboardComponent),
+      import('./features/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
     canActivate: [authGuard]
   },
   {
     path: 'admin/historial',
     loadComponent: () => 
-      import('./features/historial-dashboard/historial-dashboard').then(m => m.HistorialDashboardComponent),
+      import('./features/historial-dashboard/historial-dashboard').then(m => m.HistorialDashboard),
     canActivate: [authGuard]
   },
   {

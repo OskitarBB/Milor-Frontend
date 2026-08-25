@@ -17,15 +17,14 @@ interface PlatoResumen {
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.css']
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminDashboard implements OnInit {
   private readonly milorService = inject(MilorService);
 
   turnoAbierto = signal<boolean>(false);
   cargandoTurno = signal<boolean>(false);
   
-  // Control de modales
   modalAccion = signal<'ABRIR' | 'CERRAR' | null>(null);
-  ordenSeleccionadaModal = signal<any | null>(null); // 🔍 Modal para ver detalle de una orden
+  ordenSeleccionadaModal = signal<any | null>(null);
 
   ngOnInit(): void {
     this.verificarEstadoTurno();
