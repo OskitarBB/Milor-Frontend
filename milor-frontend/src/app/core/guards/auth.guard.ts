@@ -1,14 +1,13 @@
+// auth.guard.ts
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { map, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
 
 export const authGuard: CanActivateFn = (route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
 
-  // 1. Validar si hay sesión activa
+  // 1. Validar si hay sesión activa en el cliente
   if (!auth.estaAutenticado()) {
     router.navigate(['/login']);
     return false;
@@ -18,6 +17,7 @@ export const authGuard: CanActivateFn = (route, state) => {
   const url = state.url;
 
   // 2. Proteger rutas administrativas (/admin/*)
+  // Únicamente el rol MESERO tiene prohibido entrar aquí. ADMIN y SOPORTE tienen acceso.
   if (url.startsWith('/admin')) {
     if (rol === 'MESERO') {
       router.navigate(['/operador']);
@@ -25,7 +25,8 @@ export const authGuard: CanActivateFn = (route, state) => {
     }
   }
 
-  // 3. Proteger la ruta del operador
+  // 3. Proteger la ruta del operador (/operador)
+  // Únicamente el rol ADMIN tiene prohibido entrar aquí. SOPORTE y MESERO tienen acceso.
   if (url.startsWith('/operador')) {
     if (rol === 'ADMIN') {
       router.navigate(['/admin/dashboard']);
@@ -33,13 +34,6 @@ export const authGuard: CanActivateFn = (route, state) => {
     }
   }
 
-  // 4. Verificación robusta de vigencia del token contra el backend[cite: 1]
-  return auth.listarUsuarios().pipe(
-    map(() => true),
-    catchError(() => {
-      localStorage.removeItem('milor_user');
-      router.navigate(['/login']);
-      return of(false);
-    })
-  );
+  // 4. Si pasa todas las validaciones de roles locales, permitimos el acceso
+  return true;
 };
