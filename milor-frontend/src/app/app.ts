@@ -49,7 +49,7 @@ import { Subscription, filter } from 'rxjs';
       /* Estilo absoluto cuando la sección está activa (anula cualquier hover) */
       .nav-link.activo {
         background-color: #020617 !important; /* slate-950 */
-        color: #ffffff !important;           /* Texto blanco nítido */
+        color: #ffffff !important;          /* Texto blanco nítido */
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
       }
     </style>
@@ -165,6 +165,33 @@ import { Subscription, filter } from 'rxjs';
     <main class="w-full overflow-x-hidden">
       <router-outlet></router-outlet>
     </main>
+
+    <!-- MODAL GLOBAL DE INACTIVIDAD (Se muestra en CUALQUIER vista actual al cumplirse el tiempo) -->
+    @if (auth.sesionExpiradaModal()) {
+      <div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+        <div class="bg-white max-w-md w-full p-6 rounded-3xl shadow-2xl border border-slate-200 text-center space-y-5">
+          
+          <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-inner">
+            ⏰
+          </div>
+
+          <div class="space-y-1.5">
+            <h3 class="text-base font-black text-slate-900 uppercase tracking-wide">Sesión Expirada por Inactividad</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              Tu sesión se ha cerrado automáticamente después de 15 minutos sin actividad para proteger la seguridad del sistema Milor.
+            </p>
+          </div>
+
+          <button 
+            type="button"
+            (click)="auth.confirmarExpiracion()"
+            class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition active:scale-95 cursor-pointer">
+            Entendido / Ir al Login
+          </button>
+
+        </div>
+      </div>
+    }
   `
 })
 export class App implements OnDestroy {
